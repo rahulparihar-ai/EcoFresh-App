@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco Fresh App</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React Libraries -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel to compile JSX in the browser (Updated to version 7) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- === BHAI, API KEY YAHAN DAALNI HAI === -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YAHAN_APNI_API_KEY_PASTE_KAREIN"></script>
+    
+    <style>
+        /* Simple fade-in animation */
+        @keyframes fadeInAnimation { 0% { opacity: 0; } 100% { opacity: 1; } }
+        .animate-fade-in { animation: fadeInAnimation ease 0.5s 1 forwards; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Theme Styles */
+        :root, .theme-light {
+            --bg-primary: #f9fafb; --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
+            --text-primary: #1f2937; --text-secondary: #6b7280; --border-color: #e5e7eb;
+            --accent-primary: #10b981; --accent-secondary: #059669;
+        }
+        .theme-dark {
+            --bg-primary: #111827; --bg-secondary: #1f2937; --bg-tertiary: #374151;
+            --text-primary: #f9fafb; --text-secondary: #9ca3af; --border-color: #4b5563;
+            --accent-primary: #34d399; --accent-secondary: #10b981;
+        }
+        .theme-blue {
+            --bg-primary: #eff6ff; --bg-secondary: #ffffff; --bg-tertiary: #dbeafe;
+            --text-primary: #1e3a8a; --text-secondary: #60a5fa; --border-color: #bfdbfe;
+            --accent-primary: #3b82f6; --accent-secondary: #2563eb;
+        }
+        .theme-green {
+            --bg-primary: #f0fdf4; --bg-secondary: #ffffff; --bg-tertiary: #dcfce7;
+            --text-primary: #14532d; --text-secondary: #16a34a; --border-color: #bbf7d0;
+            --accent-primary: #22c55e; --accent-secondary: #16a34a;
+        }
+        
+        /* Styles for Admin Deskbar */
+        .admin-nav-btn.active-nav {
+            color: #0d9488; /* teal-600 */
+            background-color: #f0fdfa; /* teal-50 */
+            border-top: 3px solid #0d9488;
+            padding-top: calc(0.75rem - 3px);
+        }
+        .admin-page { display: none; }
+        .admin-page.active { display: block; }
+        .admin-card {
+            background-color: white;
+            border-radius: 0.75rem; /* rounded-xl */
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        .admin-card:hover {
+             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .admin-lang-btn.active {
+            background-color: rgba(255,255,255,0.3);
+            font-weight: bold;
+        }
+        .admin-btn-gradient {
+            background-image: linear-gradient(to right, #10b981, #0d9488);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .admin-btn-gradient:hover {
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body style="background-color: var(--bg-primary); color: var(--text-primary);">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // --- React App Code Starts Here ---
+        const { useState, useEffect, useRef, createContext, useContext } = React;
+        
+        // --- SVG Icon Components ---
+        const UserIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>;
+        const CollectorIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
+        const EcoFreshAppLogo = () => (
+            <svg className="w-20 h-20 mb-2 mx-auto" viewBox="0 0 100 100">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style={{stopColor: '#34D399', stopOpacity: 1}} />
+                        <stop offset="100%" style={{stopColor: '#3B82F6', stopOpacity: 1}} />
+                    </linearGradient>
+                </defs>
+                <circle cx="50" cy="50" r="46" fill="none" stroke="url(#logoGradient)" strokeWidth="8" />
+                <path d="M50,15 C60,30 70,40 85,50 C70,60 60,70 50,85 C40,70 30,60 15,50 C30,40 40,30 50,15 Z" fill="url(#logoGradient)" transform="rotate(45 50 50) scale(0.6)" />
+                 <path d="M50,25 C60,35 65,45 75,50 C65,55 60,65 50,75 C40,65 35,55 25,50 C35,45 40,35 50,25 Z" fill="var(--bg-secondary)" transform="rotate(45 50 50) scale(0.5)" />
+            </svg>
+        );
+        const DashboardIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>;
+        const TrainingIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>;
+        const ReportIcon = ({className}) => <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>;
+        const VehicleIcon = ({className}) => <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
+        const ProfileIcon = ({className}) => <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>;
+        const SettingsIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.096 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
+        const LogoutIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>;
+        const EcoFreshLogo = () => <svg className="w-8 h-8" style={{color: 'var(--accent-primary)'}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>;
+        const MenuIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>;
+        const CloseIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>;
+        const BellIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>;
+        const SearchIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>;
+        const LocationMarkerIcon = ({className}) => <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
+        const ArrowUpIcon = () => <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>;
+        const ArrowDownIcon = () => <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>;
+        const CheckCircleIcon = ({className}) => <svg className={`w-6 h-6 ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>;
+        const ClockIcon = ({className}) => <svg className={`w-6 h-6 ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>;
+        const SparklesIcon = () => <svg className="w-8 h-8 mx-auto" style={{color: 'var(--accent-primary)'}} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.293 2.293a1 1 0 010 1.414L10 16l-4 4 4-4 2.293-2.293a1 1 0 011.414 0L19 17"></path></svg>;
+        const XCircleIcon = () => <svg className="w-12 h-12 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>;
+        const PlayIcon = () => <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>;
+        const CameraIcon = ({className}) => <svg className={className || "w-6 h-6 text-white"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2-2H5a2 2 0 01-2-2V9z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>;
+        const PhoneIcon = ({className}) => <svg className={className || "w-5 h-5"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>;
+        const ClipboardCheckIcon = ({className}) => <svg className={`w-6 h-6 ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>;
+        const TrendingUpIcon = ({className}) => <svg className={`w-6 h-6 ${className}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>;
+        const TruckIcon = ({className}) => <svg className={className} viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 17.5V14H3V12l1-5h9l4 5h1a2 2 0 0 1 2 2v2.5"/><path d="M10 14h10v3.5m-10 0a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0Z"/><path d="M2 14h1"/><path d="M21 14h-2"/></svg>;
+        const HomeIcon = () => <svg className="w-8 h-8" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M20 9v11h-4v-7H8v7H4V9L12 3l8 6z"/></svg>;
+        const SupportIcon = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9 12h6M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>;
+        
+        // --- End of Icons ---
+
+        // --- Multi-Language Support ---
+        const translations = {
+            en: {
+                loginSubtitle: "Smart waste management for a cleaner tomorrow", welcomeBack: "Welcome Back", signInToAccount: "Sign in to your Eco Fresh account", createAccount: "Create Account", joinCommunity: "Join the Eco Fresh community", citizen: "Citizen", collector: "Collector", fullName: "Full Name", email: "Email", password: "Password", phone: "Phone Number", state: "State", city: "City", company: "Company / Organization", signIn: "Sign In", processing: "Processing...", dontHaveAccount: "Don't have an account? Sign up here", haveAccount: "Already have an account? Sign in here", dashboard: "Dashboard", reportIssues: "Report Issues", trackVehicles: "Track Vehicles", findCenters: "Find Centers", training: "Training", profile: "Profile", settings: "Settings", support: "Support", logout: "Logout", dashboardTitle: "India's Waste Management Challenge", dashboardWelcome: "Welcome to Eco Fresh. Let's work together for a cleaner India.", reportWaste: "Report Waste", reportWasteDesc: "Spotted an issue? Report overflowing bins or illegal dumping.", trackVehicle: "Track Vehicle", trackVehicleDesc: "See live location and ETA of nearby garbage collection trucks.", findCenter: "Find Centers", findCenterDesc: "Locate nearby recycling facilities for different types of waste.", language: 'Language', theme: 'Theme', change: 'Change', saveChanges: 'Save Changes', deleteAccount: 'Delete Account', deleteAccountDesc: 'Permanently delete your account.', delete: 'Delete',
+                notificationPreferences: 'Notification Preferences', pickupReminders: 'Pickup Reminders', pickupRemindersDesc: 'Get notified for scheduled pickups.', trainingUpdates: 'Training Updates', trainingUpdatesDesc: 'New training modules and certifications.', reportStatus: 'Report Status', reportStatusDesc: 'Updates on your waste reports.', communityNews: 'Community News', communityNewsDesc: 'Local waste management updates.',
+            },
+            hi: {
+                loginSubtitle: "एक स्वच्छ कल के लिए स्मार्ट अपशिष्ट प्रबंधन", welcomeBack: "वापसी पर स्वागत है", signInToAccount: "अपने इको फ्रेश खाते में साइन इन करें", createAccount: "खाता बनाएं", joinCommunity: "इको फ्रेश समुदाय में शामिल हों", citizen: "नागरिक", collector: "कलेक्टर", fullName: "पूरा नाम", email: "ईमेल", password: "पासवर्ड", phone: "फ़ोन नंबर", state: "राज्य", city: "शहर", company: "कंपनी / संगठन", signIn: "साइन इन करें", processing: "प्रोसेस हो रहा है...", dontHaveAccount: "खाता नहीं है? यहां साइन अप करें", haveAccount: "पहले से ही एक खाता है? यहां साइन इन करें", dashboard: "डैशबोर्ड", reportIssues: "समस्या की रिपोर्ट करें", trackVehicles: "वाहन ट्रैक करें", findCenters: "केंद्र खोजें", training: "प्रशिक्षण", profile: "प्रोफ़ाइल", settings: "सेटिंग्स", support: "सहायता", logout: "लॉग आउट", dashboardTitle: "भारत की अपशिष्ट प्रबंधन चुनौती", dashboardWelcome: "इको फ्रेश में आपका स्वागत है। आइए एक स्वच्छ भारत के लिए मिलकर काम करें।", reportWaste: "कचरे की रिपोर्ट करें", reportWasteDesc: "कोई समस्या दिखी? ओवरफ्लो हो रहे डिब्बे या अवैध डंपिंग की रिपोर्ट करें।", trackVehicle: "वाहन ट्रैक करें", trackVehicleDesc: "आस-पास के कचरा संग्रहण ट्रकों का लाइव स्थान और ETA देखें।", findCenter: "केंद्र खोजें", findCenterDesc: "विभिन्न प्रकार के कचरे के लिए आस-पास की रीसाइक्लिंग सुविधाएं खोजें।", language: 'भाषा', theme: 'थीम', change: 'बदलें', saveChanges: 'बदलाव सहेजें', deleteAccount: 'खाता हटाएं', deleteAccountDesc: 'अपना खाता स्थायी रूप से हटाएं।', delete: 'हटाएं',
+                notificationPreferences: 'अधिसूचना प्राथमिकताएं', pickupReminders: 'पिकअप अनुस्मारक', pickupRemindersDesc: 'निर्धारित पिकअप के लिए सूचना प्राप्त करें।', trainingUpdates: 'प्रशिक्षण अपडेट', trainingUpdatesDesc: 'नए प्रशिक्षण मॉड्यूल और प्रमाणपत्र।', reportStatus: 'रिपोर्ट स्थिति', reportStatusDesc: 'आपकी अपशिष्ट रिपोर्ट पर अपडेट।', communityNews: 'सामुदायिक समाचार', communityNewsDesc: 'स्थानीय अपशिष्ट प्रबंधन अपडेट।',
+            },
+            mr: { citizen: "नागरिक", collector: "collector", dashboard: "डॅशबोर्ड", reportIssues: "समस्या कळवा", trackVehicles: "वाहने ट्रॅक करा", findCenters: "केंद्रे शोधा", training: "प्रशिक्षण", profile: "प्रोफाइल", settings: "सेटिंग्ज", support: "समर्थन", logout: "बाहेर पडा" },
+            gu: { citizen: "नागरिक", collector: "કલેક્ટર", dashboard: "ડેશબોર્ડ", reportIssues: "સમસ્યાની જાણ કરો", trackVehicles: "વાહનો ટ્રેક કરો", findCenters: "કેન્દ્રો શોધો", training: "તાલીમ", profile: "પ્રોફાઇલ", settings: "સેટિંગ્સ", support: "સમર્થન", logout: "લૉગ આઉટ" },
+            pa: { citizen: "ਨਾਗਰਿਕ", collector: "ਕਲੈਕਟਰ", dashboard: "ਡੈਸ਼ਬੋਰਡ", reportIssues: "ਸਮੱਸਿਆ ਦੀ ਰਿਪੋਰਟ ਕਰੋ", trackVehicles: "ਵਾਹਨਾਂ ਨੂੰ ਟਰੈਕ ਕਰੋ", findCenters: "ਕੇਂਦਰ ਲੱਭੋ", training: "ਸਿਖਲਾਈ", profile: "ਪ੍ਰੋਫਾਈਲ", settings: "ਸੈਟਿੰਗਜ਼", support: "ਸਹਾਇਤਾ", logout: "ਲਾੱਗ ਆਊਟ" },
+            ur: { citizen: "शहरी", collector: "کلکٹر", dashboard: "ڈیش بورڈ", reportIssues: "مسئلہ کی اطلاع دیں", trackVehicles: "گاڑیوں کو ٹریک کریں", findCenters: "مراکز تلاش کریں", training: "تربیت", profile: "پروفائل", settings: "ترتیبات", support: "مدد", logout: "لاگ آؤٹ" },
+            bn: { citizen: "নাগরিক", collector: "সংগ্রাহক", dashboard: "ড্যাশবোর্ড", reportIssues: "সমস্যার রিপোর্ট করুন", trackVehicles: "যানবাহন ট্র্যাক করুন", findCenters: "কেন্দ্র খুঁজুন", training: "প্রশিক্ষণ", profile: "প্রোফাইল", settings: "সেটিংস", support: "সমর্থন", logout: "লগ আউট" },
+            ta: { citizen: "குடிமகன்", collector: "சேகரிப்பாளர்", dashboard: "டாஷ்போர்டு", reportIssues: "சிக்கலைப் புகாரளி", trackVehicles: "வாகனங்களைக் கண்காணிக்கவும்", findCenters: "மையங்களைக் கண்டறியவும்", training: "பயிற்சி", profile: "சுயவிவரம்", settings: "அமைப்புகள்", support: "ஆதரவு", logout: "வெளியேறு" },
+            te: { citizen: "పౌరుడు", collector: "కలెక్టర్", dashboard: "డాష్‌బోర్డ్", reportIssues: "సమస్యను నివేదించండి", trackVehicles: "వాహనాలను ట్రాక్ చేయండి", findCenters: "కేంద్రాలను కనుగొనండి", training: "శిక్షణ", profile: "ప్రొఫైల్", settings: "సెట్టింగ్‌లు", support: "మద్దతు", logout: "లాగ్ అవుట్" },
+            kn: { citizen: "ನಾಗರಿಕ", collector: "ಸಂಗ್ರಾಹಕ", dashboard: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", reportIssues: "ಸಮಸ್ಯೆಯನ್ನು ವರದಿ ಮಾಡಿ", trackVehicles: "ವಾಹನಗಳನ್ನು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ", findCenters: "ಕೇಂದ್ರಗಳನ್ನು ಹುಡುಕಿ", training: "ತರಬೇತಿ", profile: "ಪ್ರೊಫೈಲ್", settings: "ಸೆಟ್ಟಿಂಗ್‌ಗಳು", support: "ಬೆಂಬಲ", logout: "ಲಾಗ್ ಔಟ್" },
+        };
+
+        const LangContext = createContext();
+
+        const LangProvider = ({ children }) => {
+            const [lang, setLang] = useState('en');
+            const t = (key) => (translations[lang] && translations[lang][key]) || (translations['en'] && translations['en'][key]) || key;
+            return <LangContext.Provider value={{ lang, setLang, t }}>{children}</LangContext.Provider>;
+        };
+
+        const useLang = () => useContext(LangContext);
+        
+        // --- App ka Data ---
+        const wasteTypes = ['All', 'Plastic', 'E-Waste', 'Paper', 'Lead', 'Batteries', 'Organic', 'Aluminium', 'Glass', 'Metal'];
+        const rankingData = {
+            2025: { indiaRank: 7, states: [ { name: 'Madhya Pradesh', change: 'same' }, { name: 'Chhattisgarh', change: 'same' }, { name: 'Maharashtra', change: 'same' }, { name: 'Gujarat', change: 'up' }, { name: 'Telangana', change: 'up' }, { name: 'Punjab', change: 'down' }, { name: 'Rajasthan', change: 'same' }, { name: 'Andhra Pradesh', change: 'up' }, { name: 'Uttar Pradesh', change: 'down' }, { name: 'Tamil Nadu', change: 'same' } ], cities: [ { name: 'Indore', change: 'same' }, { name: 'Surat', change: 'same' }, { name: 'Navi Mumbai', change: 'same' }, { name: 'Visakhapatnam', change: 'up' }, { name: 'Bhopal', change: 'up' }, { name: 'Vijayawada', change: 'down' }, { name: 'Tirupati', change: 'up' }, { name: 'New Delhi', change: 'same' }, { name: 'Chandigarh', change: 'down' }, { name: 'Pune', change: 'up' } ] },
+            2023: { indiaRank: 8, states: [ { name: 'Madhya Pradesh', change: 'up' }, { name: 'Chhattisgarh', change: 'down' }, { name: 'Maharashtra', change: 'same' }, { name: 'Gujarat', change: 'up' }, { name: 'Punjab', change: 'same' }, { name: 'Telangana', change: 'up' }, { name: 'Rajasthan', change: 'down' }, { name: 'Andhra Pradesh', change: 'same' }, { name: 'Uttar Pradesh', change: 'up' }, { name: 'Tamil Nadu', change: 'down' } ], cities: [ { name: 'Indore', change: 'same' }, { name: 'Surat', change: 'same' }, { name: 'Navi Mumbai', change: 'up' }, { name: 'Bhopal', change: 'up' }, { name: 'Vijayawada', change: 'down' }, { name: 'Visakhapatnam', change: 'up' }, { name: 'New Delhi', change: 'down' }, { name: 'Tirupati', change: 'up' }, { name: 'Chandigarh', change: 'same' }, { name: 'Pune', change: 'up' } ] },
+            2020: { indiaRank: 12, states: [ { name: 'Chhattisgarh', change: 'up' }, { name: 'Maharashtra', change: 'up' }, { name: 'Madhya Pradesh', change: 'down' }, { name: 'Gujarat', change: 'same' }, { name: 'Punjab', change: 'up' }, { name: 'Andhra Pradesh', change: 'down' }, { name: 'Rajasthan', change: 'up' }, { name: 'Telangana', change: 'down' }, { name: 'Tamil Nadu', change: 'same' }, { name: 'Karnataka', change: 'up' } ], cities: [ { name: 'Indore', change: 'same' }, { name: 'Surat', change: 'same' }, { name: 'Vijayawada', change: 'up' }, { name: 'Navi Mumbai', change: 'up' }, { name: 'New Delhi', change: 'down' }, { name: 'Bhopal', change: 'up' }, { name: 'Chandigarh', change: 'down' }, { name: 'Visakhapatnam', change: 'same' }, { name: 'Vadodara', change: 'up' }, { name: 'Pune', change: 'down' } ] },
+            2016: { indiaRank: 18, states: [ { name: 'Karnataka', change: 'up' }, { name: 'West Bengal', change: 'up' }, { name: 'Mizoram', change: 'down' }, { name: 'Gujarat', change: 'up' }, { name: 'Sikkim', change: 'down' }, { name: 'Maharashtra', change: 'up' }, { name: 'Kerala', change: 'same' }, { name: 'Tripura', change: 'down' }, { name: 'Goa', change: 'up' }, { name: 'Punjab', change: 'up' } ], cities: [ { name: 'Mysuru', change: 'same' }, { name: 'Chandigarh', change: 'up' }, { name: 'Tiruchirapalli', change: 'up' }, { name: 'Visakhapatnam', change: 'down' }, { name: 'Surat', change: 'up' }, { name: 'Rajkot', change: 'up' }, { name: 'Gangtok', change: 'down' }, { name: 'Pimpri-Chinchwad', change: 'up' }, { name: 'Navi Mumbai', change: 'up' }, { name: 'Vadodara', change: 'down' } ] },
+            2010: { indiaRank: 25, states: [ { name: 'Sikkim', change: 'same' }, { name: 'Mizoram', change: 'same' }, { name: 'Gujarat', change: 'same' }, { name: 'Kerala', change: 'up' }, { name: 'Goa', change: 'up' }, { name: 'Tripura', change: 'down' }, { name: 'Karnataka', change: 'up' }, { name: 'West Bengal', change: 'down' }, { name: 'Nagaland', change: 'same' }, { name: 'Manipur', change: 'up' } ], cities: [ { name: 'Chandigarh', change: 'same' }, { name: 'Surat', change: 'same' }, { name: 'Mysuru', change: 'same' }, { name: 'Delhi', change: 'up' }, { name: 'Kolkata', change: 'down' }, { name: 'Chennai', change: 'up' }, { name: 'Bengaluru', change: 'down' }, { name: 'Hyderabad', change: 'up' }, { name: 'Ahmedabad', change: 'same' }, { name: 'Pune', change: 'up' } ] }
+        };
+        const recyclingFacilitiesData = [
+            { id: 1, name: 'Attero Recycling', city: 'Noida', state: 'Uttar Pradesh', types: ['E-Waste', 'Batteries'], phone: '9876543210', address: 'A-1, Sector 80, Noida' },
+            { id: 2, name: 'Gravita India Ltd.', city: 'Jaipur', state: 'Rajasthan', types: ['Lead', 'Aluminium', 'Plastic'], phone: '9876543211', address: 'Sitapura Industrial Area, Jaipur' },
+            { id: 3, name: 'Eco Recycling Ltd.', city: 'Mumbai', state: 'Maharashtra', types: ['E-Waste'], phone: '9876543212', address: 'Andheri East, Mumbai' },
+            { id: 4, name: 'Saahas Zero Waste', city: 'Bengaluru', state: 'Karnataka', types: ['Plastic', 'Paper', 'Organic'], phone: '9876543213', address: 'Koramangala, Bengaluru' },
+            { id: 5, name: 'Namo eWaste Management', city: 'Faridabad', state: 'Haryana', types: ['E-Waste', 'Plastic'], phone: '9876543214', address: 'Sector 24, Faridabad' },
+            { id: 6, name: 'Greenobin Recycling', city: 'Gurugram', state: 'Haryana', types: ['Paper'], phone: '9876543215', address: 'Udyog Vihar, Gurugram' },
+            { id: 7, name: 'Ganesha Ecosphere', city: 'Kanpur', state: 'Uttar Pradesh', types: ['PET', 'Plastic'], phone: '9876543216', address: 'Panki Industrial Area, Kanpur' },
+            { id: 8, 'name': 'Let\'s Recycle', 'city': 'Ahmedabad', 'state': 'Gujarat', 'types': ['Paper', 'Plastic', 'Metal'], phone: '9876543217', address: 'Vatva GIDC, Ahmedabad' },
+            { id: 9, 'name': 'Synergy Waste Management', 'city': 'New Delhi', 'state': 'Delhi', 'types': ['Medical Waste'], phone: '9876543218', address: 'Okhla Industrial Area, New Delhi' },
+            { id: 10, 'name': 'VITAL Recyclers', 'city': 'Chennai', 'state': 'Tamil Nadu', 'types': ['E-Waste'], phone: '9876543219', address: 'Ambattur Industrial Estate, Chennai' },
+            { id: 11, name: 'Green Power Systems', city: 'Pune', state: 'Maharashtra', types: ['Organic'], phone: '9123456780', address: 'Hinjewadi IT Park, Pune' },
+            { id: 12, name: 'Re-sustainability', city: 'Hyderabad', state: 'Telangana', types: ['Plastic', 'Paper'], phone: '9123456781', address: 'Gachibowli, Hyderabad' },
+            { id: 13, name: 'NEPRA Resource Management', city: 'Indore', state: 'Madhya Pradesh', types: ['Plastic', 'Dry Waste'], phone: '9123456782', address: 'Sanwer Road Industrial Area, Indore' },
+            { id: 14, name: 'E-Parisaraa Pvt. Ltd.', city: 'Bengaluru', state: 'Karnataka', types: ['E-Waste'], phone: '9123456783', address: 'Peenya Industrial Area, Bengaluru' },
+            { id: 15, name: 'Shivalik Solid Waste Mgmt', city: 'Chandigarh', state: 'Punjab', types: ['Organic', 'Paper'], phone: '9123456784', address: 'Industrial Area Phase 1, Chandigarh' },
+            { id: 16, name: 'Recykal', city: 'Hyderabad', state: 'Telangana', types: ['Plastic', 'Paper', 'E-Waste'], phone: '9123456785', address: 'Hi-Tech City, Hyderabad' },
+            { id: 17, name: 'Karma Recycling', city: 'New Delhi', state: 'Delhi', types: ['E-Waste', 'Mobile Phones'], phone: '9123456786', address: 'Mahipalpur, New Delhi' },
+            { id: 18, name: 'The Kabadiwala', city: 'Bhopal', state: 'Madhya Pradesh', types: ['Paper', 'Plastic', 'Metal'], phone: '9123456787', address: 'MP Nagar, Bhopal' },
+            { id: 19, name: 'Gem Enviro Management', city: 'Mumbai', state: 'Maharashtra', types: ['PET', 'Plastic'], phone: '9123456788', address: 'Lower Parel, Mumbai' },
+            { id: 20, name: 'Banyan Nation', city: 'Hyderabad', state: 'Telangana', types: ['Plastic'], phone: '9123456789', address: 'Patancheru, Hyderabad' },
+            { id: 21, name: 'E-Waste Recyclers India', city: 'Gurugram', state: 'Haryana', types: ['E-Waste'], phone: '9234567890', address: 'Manesar, Gurugram' },
+            { id: 22, name: 'J.S. Pigments Pvt. Ltd.', city: 'Vapi', state: 'Gujarat', types: ['Lead', 'Batteries'], phone: '9234567891', address: 'GIDC, Vapi' },
+            { id: 23, name: 'Lucro Plastecycle', city: 'Mumbai', state: 'Maharashtra', types: ['Plastic'], phone: '9234567892', address: 'Thane, Mumbai' },
+            { id: 24, name: 'Poompuhar Paper Mills Ltd.', city: 'Chennai', state: 'Tamil Nadu', types: ['Paper'], phone: '9234567893', address: 'Guindy, Chennai' },
+            { id: 25, name: 'Exigo Recycling', city: 'Mumbai', state: 'Maharashtra', types: ['E-Waste'], phone: '9234567894', address: 'Bhiwandi, Mumbai' },
+            { id: 26, name: 'Ecoreco', city: 'Mumbai', state: 'Maharashtra', types: ['E-Waste'], phone: '9234567895', address: 'Navi Mumbai' },
+            { id: 27, name: 'Sampurn(e)arth Environment', city: 'Mumbai', state: 'Maharashtra', types: ['Organic', 'Dry Waste'], phone: '9234567896', address: 'Dharavi, Mumbai' },
+            { id: 28, name: 'Vanshika Plastic Industry', city: 'Ahmedabad', state: 'Gujarat', types: ['Plastic'], phone: '9234567897', address: 'Narol, Ahmedabad' },
+            { id: 29, name: 'Hindalco Industries Ltd.', city: 'Renukoot', state: 'Uttar Pradesh', types: ['Aluminium'], phone: '9234567898', address: 'Renukoot, Sonbhadra' },
+            { id: 30, name: 'A2Z Green Waste Management', city: 'Kanpur', state: 'Uttar Pradesh', types: ['Organic', 'Metal'], phone: '9234567899', address: 'Rania, Kanpur Dehat' },
+            { id: 31, name: 'Hindustan Zinc Ltd.', city: 'Udaipur', state: 'Rajasthan', types: ['Lead', 'Metal'], phone: '9345678900', address: 'Yashad Bhawan, Udaipur' },
+            { id: 32, name: 'Trishul e-waste recyclers', city: 'Roorkee', state: 'Uttarakhand', types: ['E-Waste'], phone: '9345678901', address: 'SIDCUL, Haridwar' },
+            { id: 33, name: 'Shakti Plastic Industries', city: 'Mumbai', state: 'Maharashtra', types: ['Plastic'], phone: '9345678902', address: 'Malad West, Mumbai' },
+            { id: 34, name: 'Jindal Steel & Power', city: 'Raigarh', state: 'Chhattisgarh', types: ['Metal'], phone: '9345678903', address: 'Patrapali, Raigarh' },
+            { id: 35, name: 'Tata Steel Recycling', city: 'Jamshedpur', state: 'Jharkhand', types: ['Metal', 'Steel'], phone: '9345678904', address: 'Bistupur, Jamshedpur' },
+            { id: 36, name: 'E-Cleaners', city: 'Kolkata', state: 'West Bengal', types: ['E-Waste'], phone: '9345678905', address: 'Salt Lake City, Kolkata' },
+            { id: 37, name: 'Hulladek Recycling', city: 'Kolkata', state: 'West Bengal', types: ['E-Waste'], phone: '9345678906', address: 'Topsia, Kolkata' },
+            { id: 38, name: 'P&G Plastic', city: 'Baddi', state: 'Himachal Pradesh', types: ['Plastic'], phone: '9345678907', address: 'Industrial Area, Baddi' },
+            { id: 39, name: 'Jaagruti Waste Paper', city: 'Jaipur', state: 'Rajasthan', types: ['Paper'], phone: '9345678908', address: 'VKI Area, Jaipur' },
+            { id: 40, name: 'Earth Recycler Pvt Ltd', city: 'Chennai', state: 'Tamil Nadu', types: ['Organic', 'Dry Waste'], phone: '9345678909', address: 'Thirumudivakkam, Chennai' },
+            { id: 41, name: 'Clean Tech', city: 'Nagpur', state: 'Maharashtra', types: ['E-Waste'], phone: '9456789010', address: 'Butibori MIDC, Nagpur' },
+            { id: 42, name: 'Eco-Wise Waste Management', city: 'Goa', state: 'Goa', types: ['Organic', 'Glass'], phone: '9456789011', address: 'Saligao, Goa' },
+            { id: 43, name: 'Zolopik', city: 'Bengaluru', state: 'Karnataka', types: ['E-Waste', 'Batteries'], phone: '9456789012', address: 'HSR Layout, Bengaluru' },
+            { id: 44, name: 'PaperMan', city: 'Chennai', state: 'Tamil Nadu', types: ['Paper', 'Plastic'], phone: '9456789013', address: 'Adyar, Chennai' },
+            { id: 45, name: 'BinBag', city: 'Bengaluru', state: 'Karnataka', types: ['E-Waste'], phone: '9456789014', address: 'Indiranagar, Bengaluru' },
+            { id: 46, name: 'P L Global Impex', city: 'Ludhiana', state: 'Punjab', types: ['Metal', 'Paper'], phone: '9456789015', address: 'Focal Point, Ludhiana' },
+            { id: 47, name: 'TES-AMM India', city: 'Gurugram', state: 'Haryana', types: ['E-Waste'], phone: '9456789016', address: 'IMT Manesar, Gurugram' },
+            { id: 48, name: 'Global Waste Recyclers', city: 'Visakhapatnam', state: 'Andhra Pradesh', types: ['Plastic'], phone: '9456789017', address: 'Autonagar, Visakhapatnam' },
+            { id: 49, name: 'Green-O-Tech India', city: 'New Delhi', state: 'Delhi', types: ['Paper'], phone: '9456789018', address: 'Patparganj, New Delhi' },
+            { id: 50, name: 'E-Waste Solutions', city: 'Pune', state: 'Maharashtra', types: ['E-Waste'], phone: '9456789019', address: 'Chakan, Pune' },
+            { id: 51, name: 'Dalmia Polypro Industries', city: 'Nashik', state: 'Maharashtra', types: ['Plastic', 'PET'], phone: '9567890120', address: 'Ambad MIDC, Nashik' },
+            { id: 52, name: 'Cerebra Integrated Tech', city: 'Bengaluru', state: 'Karnataka', types: ['E-Waste'], phone: '9567890121', address: 'Bommasandra, Bengaluru' },
+            { id: 53, name: 'Rudra Environmental Solution', city: 'Pune', state: 'Maharashtra', types: ['Plastic'], phone: '9567890122', address: 'Khed, Pune' },
+            { id: 54, name: 'Eco-Birdd Recycling', city: 'Coimbatore', state: 'Tamil Nadu', types: ['E-Waste'], phone: '9567890123', address: 'SIDCO Industrial Estate, Coimbatore' },
+            { id: 55, name: 'Greenscape Eco Management', city: 'Ahmedabad', state: 'Gujarat', types: ['E-Waste', 'Plastic'], phone: '9567890124', address: 'Sanand, Ahmedabad' },
+            { id: 56, name: 'Virogreen India Pvt. Ltd.', city: 'Surat', state: 'Gujarat', types: ['Organic', 'Paper'], phone: '9567890125', address: 'Sachin GIDC, Surat' },
+            { id: 57, name: 'Hi-Tech Recycling', city: 'Vadodara', state: 'Gujarat', types: ['E-Waste'], phone: '9567890126', address: 'Makarpura GIDC, Vadodara' },
+            { id: 58, name: 'Green India Recyclers', city: 'Bhubaneswar', state: 'Odisha', types: ['Plastic', 'Paper'], phone: '9567890127', address: 'Mancheswar Industrial Estate, Bhubaneswar' },
+            { id: 59, name: 'JSW Steel', city: 'Ballari', state: 'Karnataka', types: ['Metal', 'Steel'], phone: '9567890128', address: 'Toranagallu, Ballari' },
+            { id: 60, name: 'Nupur Recyclers', city: 'Sonipat', state: 'Haryana', types: ['Metal', 'Plastic'], phone: '9567890129', address: 'Rai Industrial Area, Sonipat' },
+            { id: 61, name: 'Ramky Enviro Engineers', city: 'Hyderabad', state: 'Telangana', types: ['Organic', 'Medical Waste', 'Plastic'], phone: '9678901230', address: 'Jeedimetla, Hyderabad' },
+            { id: 62, name: 'Info-Trek', city: 'Kochi', state: 'Kerala', types: ['E-Waste'], phone: '9678901231', address: 'Kakkanad, Kochi' },
+            { id: 63, name: 'Bharat Oil & Waste Mgmt', city: 'Jodhpur', state: 'Rajasthan', types: ['Batteries', 'Lead'], phone: '9678901232', address: 'Basni, Jodhpur' },
+            { id: 64, name: 'E-friendly Waste Recyclers', city: 'Lucknow', state: 'Uttar Pradesh', types: ['E-Waste'], phone: '9678901233', address: 'Amausi Industrial Area, Lucknow' },
+            { id: 65, name: 'Paryavaran Mitra', city: 'Gandhinagar', state: 'Gujarat', types: ['Paper', 'Plastic'], phone: '9678901234', address: 'Infocity, Gandhinagar' },
+            { id: 66, name: 'Eco-Care Technologies', city: 'Thiruvananthapuram', state: 'Kerala', types: ['E-Waste'], phone: '9678901235', address: 'Technopark, Thiruvananthapuram' },
+            { id: 67, name: 'Aqua-Alps', city: 'Guwahati', state: 'Assam', types: ['Plastic', 'PET'], phone: '9678901236', address: 'Amingaon, Guwahati' },
+            { id: 68, name: 'Green Worms', city: 'Kozhikode', state: 'Kerala', types: ['Organic', 'Plastic'], phone: '9678901237', address: 'Cheruvannur, Kozhikode' },
+            { id: 69, name: 'Nature Care', city: 'Dehradun', state: 'Uttarakhand', types: ['Organic', 'Paper'], phone: '9678901238', address: 'Selaqui, Dehradun' },
+            { id: 70, name: 'We-Recycle', city: 'Patna', state: 'Bihar', types: ['Paper', 'Plastic', 'E-Waste'], phone: '9678901239', address: 'Patliputra Industrial Area, Patna' },
+            { id: 71, name: 'Earth Sense Recycle', city: 'Aurangabad', state: 'Maharashtra', types: ['E-Waste'], phone: '9789012340', address: 'Waluj MIDC, Aurangabad' },
+            { id: 72, name: 'Mittal Corp', city: 'Kota', state: 'Rajasthan', types: ['Metal', 'Steel'], phone: '9789012341', address: 'Indraprastha Industrial Area, Kota' },
+            { id: 73, name: 'Green-Era Recyclers', city: 'Raipur', state: 'Chhattisgarh', types: ['E-Waste', 'Plastic'], phone: '9789012342', address: 'Urla Industrial Area, Raipur' },
+            { id: 74, name: 'Let\'s Do It India', city: 'Panaji', state: 'Goa', types: ['Organic', 'Plastic', 'Glass'], phone: '9789012343', address: 'Patto Plaza, Panaji' },
+            { id: 75, name: 'Eco-Mitra', city: 'Ranchi', state: 'Jharkhand', types: ['Paper', 'Plastic'], phone: '9789012344', address: 'Tupudana Industrial Area, Ranchi' },
+            { id: 76, name: 'Enviro-Care Recycling', city: 'Jabalpur', state: 'Madhya Pradesh', types: ['E-Waste'], phone: '9789012345', address: 'Richhai Industrial Area, Jabalpur' },
+            { id: 77, name: 'SustainPlus', city: 'Agra', state: 'Uttar Pradesh', types: ['Plastic', 'Paper'], phone: '9789012346', address: 'Sikandra Industrial Area, Agra' },
+            { id: 78, name: 'Re-Circle', city: 'Indore', state: 'Madhya Pradesh', types: ['Plastic', 'PET'], phone: '9789012347', address: 'Pithampur, Indore' },
+            { id: 79, name: 'Eco-Green Solutions', city: 'Bhopal', state: 'Madhya Pradesh', types: ['Organic'], phone: '9789012348', address: 'Govindpura Industrial Area, Bhopal' },
+            { id: 80, name: 'Green Planet Recyclers', city: 'Amritsar', state: 'Punjab', types: ['E-Waste'], phone: '9789012349', address: 'Mehta Road, Amritsar' },
+            { id: 81, name: 'The Recycler', city: 'Thane', state: 'Maharashtra', types: ['Plastic', 'Paper', 'Metal'], phone: '9890123450', address: 'Wagle Estate, Thane' },
+            { id: 82, name: 'Waste Ventures India', city: 'Vijayawada', state: 'Andhra Pradesh', types: ['Organic', 'Plastic'], phone: '9890123451', address: 'Gannavaram, Vijayawada' },
+            { id: 83, name: 'Eco-Tech Recycling', city: 'Gwalior', state: 'Madhya Pradesh', types: ['E-Waste'], phone: '9890123452', address: 'Maharajpura, Gwalior' },
+            { id: 84, name: 'Plastic Fischer', city: 'Varanasi', state: 'Uttar Pradesh', types: ['Plastic'], phone: '9890123453', address: 'Ramnagar, Varanasi' },
+            { id: 85, name: 'Green buddies', city: 'Mysuru', state: 'Karnataka', types: ['Organic'], phone: '9890123454', address: 'Hebbal Industrial Area, Mysuru' },
+            { id: 86, name: 'Eco-Warriors India', city: 'Shimla', state: 'Himachal Pradesh', types: ['Plastic', 'Glass'], phone: '9890123455', address: 'Shoghi, Shimla' },
+            { id: 87, name: 'Himalayan Recyclers', city: 'Jammu', state: 'Jammu and Kashmir', types: ['Plastic', 'Paper'], phone: '9890123456', address: 'Bari Brahmana, Jammu' },
+            { id: 88, name: 'North-East Recyclers', city: 'Shillong', state: 'Meghalaya', types: ['E-Waste'], phone: '9890123457', address: 'Umiam, Shillong' },
+            { id: 89, name: 'E-Waste Planet', city: 'Siliguri', state: 'West Bengal', types: ['E-Waste'], phone: '9890123458', address: 'Sevoke Road, Siliguri' },
+            { id: 90, name: 'Bio-Crux', city: 'Madurai', state: 'Tamil Nadu', types: ['Medical Waste'], phone: '9890123459', address: 'Kappalur Industrial Estate, Madurai' },
+            { id: 91, name: 'Green Rich', city: 'Tiruchirappalli', state: 'Tamil Nadu', types: ['Organic'], phone: '9901234560', address: 'Ariyamangalam, Tiruchirappalli' },
+            { id: 92, name: 'Eco-Logic', city: 'Puducherry', state: 'Puducherry', types: ['Paper', 'Plastic'], phone: '9901234561', address: 'Mettupalayam, Puducherry' },
+            { id: 93, name: 'Re-Gen Polymers', city: 'Bhiwadi', state: 'Rajasthan', types: ['Plastic', 'PET'], phone: '9901234562', address: 'RIICO Industrial Area, Bhiwadi' },
+            { id: 94, name: 'Green India Polymers', city: 'Alwar', state: 'Rajasthan', types: ['Plastic'], phone: '9901234563', address: 'Matsya Industrial Area, Alwar' },
+            { id: 95, name: 'Eco-First', city: 'Durgapur', state: 'West Bengal', types: ['Metal', 'Steel'], phone: '9901234564', address: 'Industrial Area, Durgapur' },
+            { id: 96, name: 'Clean City Initiative', city: 'Asansol', state: 'West Bengal', types: ['Organic', 'Paper'], phone: '9901234565', address: 'Kalipahari, Asansol' },
+            { id: 97, name: 'Evergreen Recycling', city: 'Bokaro', state: 'Jharkhand', types: ['E-Waste', 'Metal'], phone: '9901234566', address: 'Bokaro Industrial Area, Bokaro' },
+            { id: 98, 'name': 'Greenleaf Recycling', 'city': 'Hubballi', 'state': 'Karnataka', 'types': ['Paper', 'Plastic'], phone: '9901234567', address: 'Tarihal Industrial Area, Hubballi' },
+            { id: 99, 'name': 'Earth-Care Recyclers', 'city': 'Mangaluru', 'state': 'Karnataka', 'types': ['Organic', 'Glass'], phone: '9901234568', address: 'Baikampady Industrial Area, Mangaluru' },
+            { id: 100, 'name': 'Eco-Vikas', 'city': 'Belagavi', 'state': 'Karnataka', 'types': ['E-Waste', 'Plastic'], phone: '9901234569', address: 'Udyambag, Belagavi' },
+            { id: 101, name: 'Kerala Enviro Infrastructure', city: 'Kochi', state: 'Kerala', types: ['Medical Waste', 'Organic'], phone: '9901234570', address: 'Ambalamedu, Kochi' }
+        ];
+        const languages = [
+            {id: 'en', name: "English"}, {id: 'hi', name: "हिन्दी (Hindi)"}, {id: 'mr', name: "मराठी (Marathi)"}, {id: 'gu', name: "ગુજરાતી (Gujarati)"}, 
+            {id: 'pa', name: "ਪੰਜਾਬੀ (Punjabi)"}, {id: 'ur', name: "اردو (Urdu)"}, {id: 'bn', name: "বাংলা (Bengali)"}, {id: 'ta', name: "தமிழ் (Tamil)"}, 
+            {id: 'te', name: "తెలుగు (Telugu)"}, {id: 'kn', name: "ಕನ್ನಡ (Kannada)"}
+        ];
+        const themes = [ {id: 'light', name: 'Light'}, {id: 'dark', name: 'Dark'}, {id: 'blue', name: 'Ocean Blue'}, {id: 'green', name: 'Forest Green'} ];
+
+        const indianStatesAndCitiesData = {
+            "States": {
+                "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Kurnool", "Rajahmundry", "Tirupati", "Kakinada", "Anantapur", "Eluru", "Ongole", "Chittoor", "Srikakulam"],
+                "Arunachal Pradesh": ["Itanagar", "Tawang", "Ziro", "Bomdila", "Pasighat"],
+                "Assam": ["Guwahati", "Dibrugarh", "Silchar", "Jorhat", "Tezpur", "Nagaon", "Tinsukia", "Bongaigaon"],
+                "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Begusarai", "Arrah"],
+                "Chhattisgarh": ["Raipur", "Bhilai", "Bilaspur", "Korba", "Durg", "Raigarh", "Jagdalpur"],
+                "Goa": ["Panaji", "Margao", "Vasco da Gama", "Mapusa", "Ponda"],
+                "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar", "Jamnagar", "Gandhinagar", "Anand", "Mehsana", "Bharuch"],
+                "Haryana": ["Faridabad", "Gurugram", "Panipat", "Ambala", "Hisar", "Rohtak", "Karnal", "Sonipat"],
+                "Himachal Pradesh": ["Shimla", "Manali", "Dharamshala", "Kullu", "Mandi", "Solan", "Dalhousie"],
+                "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro Steel City", "Deoghar", "Hazaribagh"],
+                "Karnataka": ["Bengaluru", "Mysuru", "Hubballi", "Mangaluru", "Belagavi", "Davanagere", "Ballari", "Udupi", "Shivamogga"],
+                "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam", "Alappuzha", "Kannur", "Kottayam"],
+                "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain", "Sagar", "Satna", "Rewa"],
+                "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad", "Thane", "Navi Mumbai", "Kolhapur", "Solapur"],
+                "Manipur": ["Imphal", "Thoubal", "Bishnupur", "Churachandpur"],
+                "Meghalaya": ["Shillong", "Tura", "Jowai", "Nongpoh"],
+                "Mizoram": ["Aizawl", "Lunglei", "Champhai", "Serchhip"],
+                "Nagaland": ["Kohima", "Dimapur", "Mokokchung", "Wokha", "Zunheboto"],
+                "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Puri", "Sambalpur", "Berhampur", "Balasore"],
+                "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda", "Mohali", "Pathankot"],
+                "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Bikaner", "Ajmer", "Alwar", "Bhilwara"],
+                "Sikkim": ["Gangtok", "Namchi", "Pelling", "Mangan"],
+                "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tirunelveli", "Vellore", "Erode"],
+                "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Ramagundam", "Khammam"],
+                "Tripura": ["Agartala", "Udaipur", "Dharmanagar", "Kailasahar"],
+                "Uttar Pradesh": ["Lucknow", "Kanpur", "Ghaziabad", "Agra", "Varanasi", "Meerut", "Prayagraj", "Noida", "Gorakhpur", "Bareilly"],
+                "Uttarakhand": ["Dehradun", "Haridwar", "Roorkee", "Haldwani", "Rishikesh", "Nainital"],
+                "West Bengal": ["Kolkata", "Asansol", "Siliguri", "Durgapur", "Howrah", "Darjeeling", "Haldia"]
+            },
+            "Union Territories": {
+                "Andaman and Nicobar Islands": ["Port Blair", "Havelock Island", "Neil Island", "Diglipur"],
+                "Chandigarh": ["Chandigarh"],
+                "Dadra and Nagar Haveli and Daman and Diu": ["Daman", "Diu", "Silvassa"],
+                "Delhi": ["New Delhi"],
+                "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Udhampur", "Katra"],
+                "Ladakh": ["Leh", "Kargil"],
+                "Lakshadweep": ["Kavaratti", "Agatti", "Minicoy"],
+                "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"]
+            }
+        };
+
+        // --- Helper Components ---
+        const Modal = ({ isOpen, onClose, title, children }) => { 
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-sm" style={{backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)'}} onClick={e => e.stopPropagation()}>
+                        <div className="p-4 border-b flex justify-between items-center" style={{borderColor: 'var(--border-color)'}}>
+                            <h3 className="text-lg font-semibold">{title}</h3>
+                            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">&times;</button>
+                        </div>
+                        <div className="p-4">{children}</div>
+                    </div>
+                </div>
+            );
+        };
+        const ToggleSwitch = ({ enabled, onChange }) => ( <button onClick={() => onChange(!enabled)} className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${enabled ? 'bg-green-600' : 'bg-gray-300'}`} style={{backgroundColor: enabled ? 'var(--accent-primary)' : '#D1D5DB'}}> <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} /> </button> );
+        const AnimatedPage = ({ children }) => <div className="animate-fade-in h-full">{children}</div>;
+        
+        // --- App ke Bade Components ---
+        
+        const LoginPage = ({ onLoginSuccess }) => {
+            const { t } = useLang();
+            const [page, setPage] = useState('signin');
+            const [role, setRole] = useState('citizen');
+            const [signupStep, setSignupStep] = useState('details');
+            const [isLoading, setIsLoading] = useState(false);
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [fullName, setFullName] = useState('');
+            const [birthday, setBirthday] = useState({ day: '', month: '', year: ''});
+            const [age, setAge] = useState(null);
+            const [selectedState, setSelectedState] = useState('');
+            const [selectedCity, setSelectedCity] = useState('');
+            const [company, setCompany] = useState('');
+            const [otp, setOtp] = useState('');
+            const [errors, setErrors] = useState({});
+            const [availableCities, setAvailableCities] = useState([]);
+            const allStates = { ...indianStatesAndCitiesData.States, ...indianStatesAndCitiesData["Union Territories"] };
+
+            const calculateAge = (b) => {
+                if(!b.year || !b.month || !b.day) return null;
+                const dob = `${b.year}-${b.month}-${b.day}`;
+                const birthDate = new Date(dob);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                return age;
+            }
+            
+            useEffect(() => {
+                const calculatedAge = calculateAge(birthday);
+                setAge(calculatedAge >= 0 ? calculatedAge : null);
+            }, [birthday]);
+
+
+            const handleStateChange = (e) => {
+                const state = e.target.value;
+                setSelectedState(state);
+                setSelectedCity('');
+                setAvailableCities(allStates[state] || []);
+            };
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                if (page === 'signin') {
+                    setTimeout(() => {
+                        setIsLoading(false);
+                        const userDetails = { name: email.split('@')[0], email, birthday: '1995-01-01', age: calculateAge({year: '1995', month: '01', day: '01'}), location: 'Gurgaon, Haryana', photo: null };
+                        onLoginSuccess(role, userDetails);
+                    }, 1000);
+                } else {
+                    setTimeout(() => {
+                        setIsLoading(false);
+                        setSignupStep('otp');
+                    }, 1000);
+                }
+            };
+
+            const handleOtpVerify = (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                setTimeout(() => {
+                    if (otp === '123456') {
+                        setIsLoading(false);
+                        const userDetails = { name: fullName, email, birthday: `${birthday.year}-${birthday.month}-${birthday.day}`, age, location: `${selectedCity}, ${selectedState}`, photo: null };
+                        onLoginSuccess(role, userDetails);
+                    } else {
+                        setIsLoading(false);
+                        setErrors({ otp: 'Invalid OTP. Please try again.' });
+                    }
+                }, 1500);
+            };
+
+            const BirthdaySelector = ({ value, onChange }) => {
+                const days = Array.from({ length: 31 }, (_, i) => i + 1);
+                const months = [ {name: 'January', val: '01'}, {name: 'February', val: '02'}, {name: 'March', val: '03'}, {name: 'April', val: '04'}, {name: 'May', val: '05'}, {name: 'June', val: '06'}, {name: 'July', val: '07'}, {name: 'August', val: '08'}, {name: 'September', val: '09'}, {name: 'October', val: '10'}, {name: 'November', val: '11'}, {name: 'December', val: '12'} ];
+                const currentYear = new Date().getFullYear();
+                const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
+
+                const handleChange = (e) => {
+                    onChange({ ...value, [e.target.name]: e.target.value });
+                };
+
+                return (
+                    <div>
+                        <label className="text-xs text-gray-500">Date of Birth</label>
+                        <div className="grid grid-cols-3 gap-2">
+                             <select name="day" value={value.day} onChange={handleChange} className="w-full px-2 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}}>
+                                <option value="">Day</option>
+                                {days.map(d => <option key={d} value={d}>{d}</option>)}
+                            </select>
+                            <select name="month" value={value.month} onChange={handleChange} className="w-full px-2 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}}>
+                                <option value="">Month</option>
+                                {months.map(m => <option key={m.val} value={m.val}>{m.name}</option>)}
+                            </select>
+                             <select name="year" value={value.year} onChange={handleChange} className="w-full px-2 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}}>
+                                <option value="">Year</option>
+                                {years.map(y => <option key={y} value={y}>{y}</option>)}
+                            </select>
+                        </div>
+                    </div>
+                );
+            };
+
+
+            if (signupStep === 'otp') { return ( /* OTP JSX */ <div className="min-h-screen flex items-center justify-center p-4" style={{backgroundColor: 'var(--bg-primary)'}}> <div className="w-full max-w-md"> <div className="rounded-2xl shadow-lg p-8" style={{backgroundColor: 'var(--bg-secondary)'}}> <h2 className="text-2xl font-bold text-center" style={{color: 'var(--text-primary)'}}>Verify Your Account</h2> <p className="text-sm text-center mt-2" style={{color: 'var(--text-secondary)'}}>An OTP has been sent. (Hint: 123456)</p> <form onSubmit={handleOtpVerify} className="space-y-6 mt-6"> <div> <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Enter 6-digit OTP" maxLength="6" className="w-full px-4 py-3 text-center tracking-widest border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', '--tw-ring-color': 'var(--accent-primary)'}}/> {errors.otp && <p className="text-red-500 text-xs mt-2 text-center">{errors.otp}</p>} </div> <button type="submit" disabled={isLoading} className="w-full py-3 font-semibold text-white rounded-lg transition-colors" style={{backgroundColor: isLoading ? '#9CA3AF' : 'var(--accent-primary)'}}> {isLoading ? 'Verifying...' : 'Verify & Sign Up'} </button> </form> </div> </div> </div> ); }
+            return ( /* Login Form JSX */ <div className="min-h-screen flex items-center justify-center p-4 font-sans" style={{backgroundColor: 'var(--bg-primary)'}}> <div className="w-full max-w-md"> <div className="text-center mb-6"> <EcoFreshAppLogo /> <h1 className="text-3xl font-bold mt-2" style={{color: 'var(--text-primary)'}}>Eco Fresh</h1> </div> <div className="rounded-2xl shadow-lg p-8" style={{backgroundColor: 'var(--bg-secondary)'}}> <div className="text-center mb-6"> <h2 className="text-2xl font-bold">{page === 'signin' ? 'Welcome Back' : 'Create Account'}</h2> </div> <div className="flex p-1 rounded-lg mb-4" style={{backgroundColor: 'var(--bg-tertiary)'}}> <button onClick={() => setRole('citizen')} className={`w-1/2 p-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 ${role === 'citizen' ? 'shadow' : ''}`} style={{backgroundColor: role === 'citizen' ? 'var(--bg-secondary)' : 'transparent', color: role === 'citizen' ? 'var(--accent-primary)' : 'var(--text-secondary)'}}><UserIcon />Citizen</button> <button onClick={() => setRole('collector')} className={`w-1/2 p-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 ${role === 'collector' ? 'shadow' : ''}`} style={{backgroundColor: role === 'collector' ? 'var(--bg-secondary)' : 'transparent', color: role === 'collector' ? 'var(--accent-primary)' : 'var(--text-secondary)'}}><CollectorIcon />Admin Deskbar</button> </div> <form onSubmit={handleSubmit} className="space-y-4"> {page === 'signup' && ( <> <div> <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full Name" required className="w-full px-4 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}} /> </div> <BirthdaySelector value={birthday} onChange={setBirthday} /> {age !== null && <p className="text-xs text-gray-500 mt-1">Your age: {age} years</p>} </> )} <div> <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required className="w-full px-4 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}} /> </div> <div> <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required className="w-full px-4 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}} /> </div> {page === 'signup' && role === 'collector' && ( <div> <input type="text" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company / Organization" required className="w-full px-4 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}} /> </div> )} {page === 'signup' && ( <> <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> <select value={selectedState} onChange={handleStateChange} required className="w-full px-4 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}}> <option value="">Select State/UT</option> <optgroup label="States"> {Object.keys(indianStatesAndCitiesData.States).sort().map(state => (<option key={state} value={state}>{state}</option>))} </optgroup> <optgroup label="Union Territories"> {Object.keys(indianStatesAndCitiesData["Union Territories"]).sort().map(ut => (<option key={ut} value={ut}>{ut}</option>))} </optgroup> </select> <select value={selectedCity} onChange={(e) => setSelectedCity(e.target.value)} required disabled={!selectedState} className="w-full px-4 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2 disabled:cursor-not-allowed" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}}> <option value="">Select City</option> {availableCities.sort().map(city => (<option key={city} value={city}>{city}</option>))} </select> </div> </>)} <button type="submit" disabled={isLoading} className="w-full py-3 font-semibold text-white rounded-lg" style={{backgroundColor: isLoading ? '#9CA3AF' : 'var(--accent-primary)'}}> {isLoading ? 'Processing...' : (page === 'signin' ? 'Sign In' : 'Continue')} </button> </form> <div className="text-center mt-4"> <button onClick={() => { setPage(page === 'signin' ? 'signup' : 'signin'); setErrors({}); }} className="text-sm hover:underline" style={{color: 'var(--accent-primary)'}}> {page === 'signin' ? "Don't have an account? Sign up" : "Already have an account? Sign in"} </button> </div> </div> </div> </div> );
+        };
+        const DashboardContent = ({ setActivePage }) => {
+            const { t } = useLang();
+            const ActionCard = ({ icon, title, description, onClick }) => (
+                <button onClick={onClick} className="p-6 rounded-xl shadow-sm text-left transition-all hover:shadow-lg hover:-translate-y-1" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                    <div className="p-3 rounded-full inline-block" style={{backgroundColor: 'var(--bg-tertiary)'}}>
+                        {icon}
+                    </div>
+                    <h3 className="text-lg font-bold mt-4" style={{color: 'var(--text-primary)'}}>{title}</h3>
+                    <p className="text-sm mt-1" style={{color: 'var(--text-secondary)'}}>{description}</p>
+                </button>
+            );
+             const WasteRanking = () => {
+                const [year, setYear] = useState('2025');
+                const [activeTab, setActiveTab] = useState('cities');
+                const data = rankingData[year];
+                const RankRow = ({ item, index }) => (
+                    <tr style={{borderTopColor: 'var(--border-color)'}}>
+                        <td className="p-3 font-semibold">#{index + 1}</td>
+                        <td className="p-3">{item.name}</td>
+                        <td className="p-3">
+                            <span className={`flex items-center gap-1 ${item.change === 'up' ? 'text-green-500' : item.change === 'down' ? 'text-red-500' : 'text-gray-500'}`}>
+                               {item.change === 'up' && <ArrowUpIcon />}
+                               {item.change === 'down' && <ArrowDownIcon />}
+                               {item.change === 'same' && '-'}
+                            </span>
+                        </td>
+                    </tr>
+                );
+                return(
+                    <div className="p-6 rounded-xl shadow-sm mt-8" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                        <h2 className="text-xl font-bold" style={{color: 'var(--text-primary)'}}>Waste Management Rankings</h2>
+                        <div className="flex items-center justify-between my-4 flex-wrap gap-2">
+                            <div className="flex space-x-1 p-1 rounded-lg" style={{backgroundColor: 'var(--bg-tertiary)'}}>
+                                {Object.keys(rankingData).reverse().map(y => (
+                                    <button key={y} onClick={() => setYear(y)} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${year === y ? 'text-white' : ''}`} style={{backgroundColor: year === y ? 'var(--accent-primary)' : 'transparent', color: year === y ? 'white' : 'var(--text-secondary)'}}>
+                                        {y}
+                                    </button>
+                                ))}
+                            </div>
+                             <div className="text-center p-3 rounded-lg" style={{backgroundColor: 'var(--bg-tertiary)'}}>
+                                <p className="text-sm" style={{color: 'var(--text-secondary)'}}>India's Global Rank ({year})</p>
+                                <p className="text-2xl font-bold" style={{color: 'var(--accent-primary)'}}>#{data.indiaRank}</p>
+                            </div>
+                        </div>
+                        <div className="flex border-b" style={{borderColor: 'var(--border-color)'}}>
+                            <button onClick={() => setActiveTab('cities')} className={`px-4 py-2 font-medium text-sm ${activeTab === 'cities' ? 'border-b-2' : ''}`} style={{borderColor: activeTab === 'cities' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'cities' ? 'var(--accent-primary)' : 'var(--text-secondary)'}}>Top 10 Cities</button>
+                            <button onClick={() => setActiveTab('states')} className={`px-4 py-2 font-medium text-sm ${activeTab === 'states' ? 'border-b-2' : ''}`} style={{borderColor: activeTab === 'states' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'states' ? 'var(--accent-primary)' : 'var(--text-secondary)'}}>Top 10 States</button>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full mt-2 text-left">
+                                <thead>
+                                    <tr style={{color: 'var(--text-secondary)'}}>
+                                        <th className="p-3 text-sm font-semibold">Rank</th>
+                                        <th className="p-3 text-sm font-semibold">{activeTab === 'states' ? 'State' : 'City'}</th>
+                                        <th className="p-3 text-sm font-semibold">Change</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {(activeTab === 'states' ? data.states : data.cities).map((item, index) => (
+                                        <RankRow key={item.name} item={item} index={index} />
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+            };
+            return (
+                <div className="space-y-8">
+                    <div>
+                        <h1 className="text-3xl font-bold" style={{color: 'var(--text-primary)'}}>{t('dashboardTitle')}</h1>
+                        <p className="mt-2" style={{color: 'var(--text-secondary)'}}>{t('dashboardWelcome')}</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <ActionCard icon={<ReportIcon className="w-6 h-6" style={{color: 'var(--accent-primary)'}} />} title={t('reportWaste')} description={t('reportWasteDesc')} onClick={() => setActivePage('reportIssues')} />
+                        <ActionCard icon={<VehicleIcon className="w-6 h-6" style={{color: 'var(--accent-primary)'}} />} title={t('trackVehicle')} description={t('trackVehicleDesc')} onClick={() => setActivePage('trackVehicles')} />
+                        <ActionCard icon={<LocationMarkerIcon className="w-6 h-6" style={{color: 'var(--accent-primary)'}} />} title={t('findCenter')} description={t('findCenterDesc')} onClick={() => setActivePage('findCenters')} />
+                    </div>
+                    <WasteRanking />
+                </div>
+            );
+        };
+        const FindCentersPageContent = () => {
+            const [searchTerm, setSearchTerm] = useState('');
+            const [typeFilter, setTypeFilter] = useState('All');
+            const filteredFacilities = recyclingFacilitiesData.filter(facility => {
+                const searchLower = searchTerm.toLowerCase();
+                const matchesSearch = facility.name.toLowerCase().includes(searchLower) || facility.city.toLowerCase().includes(searchLower) || facility.state.toLowerCase().includes(searchLower) || facility.address.toLowerCase().includes(searchLower);
+                const matchesType = typeFilter === 'All' || facility.types.includes(typeFilter);
+                return matchesSearch && matchesType;
+            });
+            const getTypeColor = (type) => {
+                switch(type) {
+                    case 'E-Waste': return 'bg-blue-100 text-blue-800';
+                    case 'Plastic': return 'bg-green-100 text-green-800';
+                    case 'Paper': return 'bg-yellow-100 text-yellow-800';
+                    case 'Batteries': return 'bg-red-100 text-red-800';
+                    case 'Metal': return 'bg-gray-200 text-gray-800';
+                    case 'Organic': return 'bg-lime-100 text-lime-800';
+                    case 'Glass': return 'bg-cyan-100 text-cyan-800';
+                    default: return 'bg-gray-100 text-gray-800';
+                }
+            };
+            return (
+                <div className="space-y-6">
+                    <h1 className="text-3xl font-bold" style={{color: 'var(--text-primary)'}}>Find Recycling Facilities</h1>
+                    <div className="p-6 rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                        <div className="my-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="relative md:col-span-2">
+                                <input type="text" placeholder="Search by name, city, state, or address..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-2 border rounded-lg" style={{backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)'}} />
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" style={{color: 'var(--text-secondary)'}}><SearchIcon /></div>
+                            </div>
+                            <div>
+                                <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="w-full px-4 py-2 border rounded-lg" style={{backgroundColor: 'var(--bg-tertiary)', borderColor: 'var(--border-color)'}} >
+                                    {wasteTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredFacilities.length > 0 ? filteredFacilities.map(facility => (
+                                <div key={facility.id} className="p-4 rounded-lg flex flex-col justify-between" style={{backgroundColor: 'var(--bg-tertiary)'}}>
+                                    <div>
+                                        <h3 className="font-bold text-lg" style={{color: 'var(--text-primary)'}}>{facility.name}</h3>
+                                        <p className="text-sm mt-1" style={{color: 'var(--text-secondary)'}}>{facility.address}, {facility.city}, {facility.state}</p>
+                                        <div className="flex items-center mt-3">
+                                            <PhoneIcon className="w-4 h-4" style={{color: 'var(--text-secondary)'}}/>
+                                            <a href={`tel:${facility.phone}`} className="text-sm ml-2 hover:underline" style={{color: 'var(--accent-primary)'}}>{facility.phone}</a>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 mt-4">
+                                        {facility.types.map(type => (<span key={type} className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(type)}`}>{type}</span>))}
+                                    </div>
+                                </div>
+                            )) : ( <p className="md:col-span-3 text-center py-8" style={{color: 'var(--text-secondary)'}}>No facilities found matching your criteria.</p> )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        const TrainingPageContent = () => {
+            const [activeTab, setActiveTab] = useState('modules'); 
+            const trainingModules = [ { year: 2000, title: 'MSW Management Rules', desc: 'The first comprehensive rules for municipal solid waste management were introduced, setting standards for collection, segregation, and disposal.' }, { year: 2014, title: 'Swachh Bharat Mission (SBM) 1.0', desc: 'A massive nationwide cleanliness campaign was launched, focusing on ending open defecation and improving solid waste management. A key milestone.' }, { year: 2016, title: 'Updated Management Rules', desc: 'A new set of rules including Solid Waste, Plastic Waste, and E-Waste Management were notified to promote a more circular economy.' }, { year: 2018, title: 'GOBAR-Dhan Scheme', desc: 'Launched to convert cattle dung and solid waste from farms and villages into compost, biogas, and biofuels.' }, { year: 2021, title: 'SBM-Urban 2.0 & Plastic Ban Phase-in', desc: 'The second phase of SBM was launched with the vision of making all Indian cities "Garbage Free". A phased ban on single-use plastics also began.' }, { year: 2022, title: 'Full Ban on Single-Use Plastic', desc: 'A comprehensive ban on identified single-use plastic items was implemented across the country to curb plastic pollution.' }, { year: 2025, title: 'Current Status & Future Goals', desc: 'India has significantly improved waste processing from 18% in 2014 to over 75% today. The goal is 100% processing and creating "Garbage-Free Cities".' }, ];
+            const trainingVideos = [ { id: 1, title: 'AI Explains: Segregation', desc: 'Learn the basics of dry, wet, and hazardous waste segregation at home.', thumbnail: 'https://placehold.co/600x400/34D399/FFFFFF?text=AI+Voice', ai: true }, { id: 2, title: 'AI Explains: India\'s Challenge', desc: 'An overview of the scale of the waste management problem in India.', thumbnail: 'https://placehold.co/600x400/EF4444/FFFFFF?text=AI+Voice', ai: true }, { id: 3, title: 'AI Explains: Composting', desc: 'A step-by-step guide to turning your organic waste into nutrient-rich compost.', thumbnail: 'https://placehold.co/600x400/22C55E/FFFFFF?text=AI+Voice', ai: true }, { id: 4, title: 'Health Hazards of Waste', desc: 'Learn about diseases like Dengue, Cholera, and Typhoid spread by improper waste disposal.', thumbnail: 'https://placehold.co/600x400/f97316/FFFFFF?text=Health+Alert' }, { id: 5, title: 'Kachre se Jugad: Best from Waste', desc: 'Creative ideas to turn your household waste into useful and beautiful items.', thumbnail: 'https://placehold.co/600x400/FBBF24/FFFFFF?text=DIY+Crafts' }, { id: 6, title: 'Impact on Water Bodies', desc: 'Understanding how landfills and garbage contaminate our rivers and groundwater.', thumbnail: 'https://placehold.co/600x400/3b82f6/FFFFFF?text=Water+Pollution' } ];
+            return (
+                <div className="space-y-6">
+                    <h1 className="text-3xl font-bold" style={{color: 'var(--text-primary)'}}>Training & Awareness</h1>
+                    <div className="flex border-b" style={{borderColor: 'var(--border-color)'}}>
+                        <button onClick={() => setActiveTab('modules')} className={`px-4 py-2 font-medium text-sm transition-colors ${activeTab === 'modules' ? 'border-b-2' : ''}`} style={{borderColor: activeTab === 'modules' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'modules' ? 'var(--accent-primary)' : 'var(--text-secondary)'}}>Training Modules</button>
+                        <button onClick={() => setActiveTab('videos')} className={`px-4 py-2 font-medium text-sm transition-colors ${activeTab === 'videos' ? 'border-b-2' : ''}`} style={{borderColor: activeTab === 'videos' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'videos' ? 'var(--accent-primary)' : 'var(--text-secondary)'}}>Training Videos</button>
+                    </div>
+                    {activeTab === 'modules' && ( <div className="animate-fade-in p-6 rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}> <h2 className="text-xl font-bold mb-4">India's Waste Management Journey</h2> <div className="relative border-l-2 pl-6" style={{borderColor: 'var(--accent-primary)'}}> {trainingModules.map((item, index) => ( <div key={index} className="mb-8"> <div className="absolute -left-3.5 mt-1.5 w-6 h-6 rounded-full" style={{backgroundColor: 'var(--accent-primary)'}}></div> <p className="font-bold text-lg" style={{color: 'var(--accent-primary)'}}>{item.year}</p> <h3 className="font-semibold text-md mt-1" style={{color: 'var(--text-primary)'}}>{item.title}</h3> <p className="text-sm mt-1" style={{color: 'var(--text-secondary)'}}>{item.desc}</p> </div> ))} </div> </div> )}
+                    {activeTab === 'videos' && ( <div className="animate-fade-in"> <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"> {trainingVideos.map(video => ( <div key={video.id} className="rounded-xl shadow-sm overflow-hidden group cursor-pointer" style={{backgroundColor: 'var(--bg-secondary)'}}> <div className="relative"> <img src={video.thumbnail} alt={video.title} className="w-full h-48 object-cover"/> <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 flex items-center justify-center transition-opacity"><PlayIcon /></div> {video.ai && <span className="absolute top-2 left-2 bg-purple-500 text-white text-xs font-bold px-2 py-1 rounded">AI Generated</span>} </div> <div className="p-4"> <h3 className="font-bold" style={{color: 'var(--text-primary)'}}>{video.title}</h3> <p className="text-sm mt-1" style={{color: 'var(--text-secondary)'}}>{video.desc}</p> </div> </div> ))} </div> </div> )}
+                </div>
+            );
+        };
+        const ReportIssuesPageContent = () => {
+            const [activeTab, setActiveTab] = useState('submit');
+            const [reports, setReports] = useState([ { id: 1, desc: 'Overflowing dumpster near park', location: 'Sector 15, Noida', status: 'Solved', photo: 'https://placehold.co/600x400/34D399/FFFFFF?text=Old+Report' }, { id: 2, desc: 'Illegal dumping on roadside', location: 'Green Valley, Gurgaon', status: 'In Progress', photo: 'https://placehold.co/600x400/FBBF24/FFFFFF?text=Old+Report' }, ]);
+            const [newReport, setNewReport] = useState({ desc: '', location: '', photo: null, photoPreview: null });
+            const resetForm = () => { setNewReport({ desc: '', location: '', photo: null, photoPreview: null }); };
+
+            const handlePhotoChange = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    const previewUrl = URL.createObjectURL(file);
+                    setNewReport(prev => ({ ...prev, photo: file, photoPreview: previewUrl }));
+                    if (navigator.geolocation) {
+                        setNewReport(prev => ({...prev, location: 'Detecting location...'}));
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => { setNewReport(prev => ({...prev, location: `Lat: ${position.coords.latitude.toFixed(5)}, Lon: ${position.coords.longitude.toFixed(5)}`})); },
+                            () => { setNewReport(prev => ({...prev, location: 'Could not get location. Please enter manually.'})); }
+                        );
+                    }
+                }
+            };
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!newReport.photo || !newReport.location || !newReport.desc) { alert('Please fill all fields and upload a photo.'); return; }
+                const newEntry = { id: Date.now(), desc: newReport.desc, location: newReport.location, status: 'In Progress', photo: newReport.photoPreview };
+                setReports(prev => [newEntry, ...prev]);
+                alert('Report submitted successfully!');
+                resetForm();
+                setActiveTab('community');
+            };
+            
+            const ReportCard = ({report}) => (
+                <div className="p-4 rounded-lg flex items-start justify-between gap-4" style={{backgroundColor: 'var(--bg-tertiary)'}}>
+                    {report.photo && <img src={report.photo} alt="Report image" className="w-20 h-20 rounded-md object-cover" />}
+                    <div className="flex-1">
+                        <p className="font-semibold" style={{color: 'var(--text-primary)'}}>{report.desc}</p>
+                        <p className="text-sm" style={{color: 'var(--text-secondary)'}}>{report.location}</p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full self-start ${report.status === 'Solved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>{report.status}</span>
+                </div>
+            );
+           
+            return (
+                <div className="space-y-6">
+                    <h1 className="text-3xl font-bold" style={{color: 'var(--text-primary)'}}>Report an Issue</h1>
+                    <div className="flex border-b" style={{borderColor: 'var(--border-color)'}}>
+                        <button onClick={() => setActiveTab('submit')} className={`px-4 py-2 font-medium text-sm transition-colors ${activeTab === 'submit' ? 'border-b-2' : ''}`} style={{borderColor: activeTab === 'submit' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'submit' ? 'var(--accent-primary)' : 'var(--text-secondary)'}}>Submit Report</button>
+                        <button onClick={() => setActiveTab('community')} className={`px-4 py-2 font-medium text-sm transition-colors ${activeTab === 'community' ? 'border-b-2' : ''}`} style={{borderColor: activeTab === 'community' ? 'var(--accent-primary)' : 'transparent', color: activeTab === 'community' ? 'var(--accent-primary)' : 'var(--text-secondary)'}}>Community Reports</button>
+                    </div>
+                    {activeTab === 'submit' && (
+                        <div className="p-6 rounded-xl shadow-sm max-w-2xl mx-auto animate-fade-in" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <h2 className="text-lg font-semibold mb-2">File a New Complaint</h2>
+                                <div>
+                                    <label className="text-sm font-medium" style={{color: 'var(--text-secondary)'}}>Add Photo</label>
+                                    <div className="mt-1">
+                                        <label htmlFor="file-upload" className="relative cursor-pointer w-full flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md" style={{borderColor: 'var(--border-color)'}}>
+                                            {newReport.photoPreview ? (
+                                                <img src={newReport.photoPreview} alt="Preview" className="max-h-48 rounded-md" />
+                                            ) : (
+                                                <div className="space-y-1 text-center"><svg className="mx-auto h-12 w-12" style={{color: 'var(--text-secondary)'}} stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg><p className="text-sm" style={{color: 'var(--text-secondary)'}}>Click to upload a photo</p><p className="text-xs" style={{color: 'var(--text-secondary)'}}>Location will be auto-detected</p></div>
+                                            )}
+                                            <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handlePhotoChange} />
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium" style={{color: 'var(--text-secondary)'}}>Location</label>
+                                    <input type="text" value={newReport.location} onChange={e => setNewReport({...newReport, location: e.target.value})} placeholder="Location is auto-detected" required className="w-full px-4 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', '--tw-ring-color': 'var(--accent-primary)'}} />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium" style={{color: 'var(--text-secondary)'}}>Detailed Description</label>
+                                    <textarea rows="4" value={newReport.desc} onChange={e => setNewReport({...newReport, desc: e.target.value})} placeholder="Describe the issue (e.g., 'bahut kachra pada hai' or 'sadak tuti hai')" required className="w-full px-4 py-2 mt-1 border-transparent rounded-lg focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', '--tw-ring-color': 'var(--accent-primary)'}}></textarea>
+                                </div>
+                                <button type="submit" className="w-full py-3 font-semibold text-white rounded-lg transition-colors shadow-md transform hover:scale-105" style={{backgroundColor: 'var(--accent-primary)'}}>Submit Report</button>
+                            </form>
+                        </div>
+                    )}
+                    {activeTab === 'community' && (
+                        <div className="animate-fade-in">
+                            <div className="p-6 rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                                <h2 className="text-lg font-semibold mb-4">Recent Community Reports</h2>
+                                <div className="space-y-3">
+                                    {reports.map(report => <ReportCard key={report.id} report={report} />)}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        const TrackVehiclesPageContent = () => {
+            const mapRef = useRef(null);
+            const mapInstanceRef = useRef(null);
+            useEffect(() => {
+                if (window.google && mapRef.current && !mapInstanceRef.current) {
+                    const map = new window.google.maps.Map(mapRef.current, { center: { lat: 20.5937, lng: 78.9629 }, zoom: 5, disableDefaultUI: true });
+                    mapInstanceRef.current = map;
+                }
+            }, []);
+            return (
+                <div className="h-full flex flex-col">
+                    <h1 className="text-3xl font-bold mb-4" style={{color: 'var(--text-primary)'}}>India Map</h1>
+                    <p className="mb-4" style={{color: 'var(--text-secondary)'}}>This is a basic map of India. Vehicle tracking will be added later.</p>
+                    <div ref={mapRef} className="flex-1 rounded-xl shadow-sm relative overflow-hidden" style={{backgroundColor: 'var(--bg-tertiary)'}}>
+                        {!window.google && <div className="flex items-center justify-center h-full text-gray-500">Loading Map... Please check your API Key.</div>}
+                    </div>
+                </div>
+            );
+        };
+        const ProfilePageContent = ({ userDetails, setUserDetails }) => {
+            const [activeTab, setActiveTab] = useState('Personal Info');
+            const [isEditing, setIsEditing] = useState(false);
+            const [tempUserData, setTempUserData] = useState(userDetails);
+            const [privacySettings, setPrivacySettings] = useState({ dataSharing: 'limited', location: true, visibility: 'community'});
+            const fileInputRef = useRef(null);
+            
+            useEffect(() => { setTempUserData(userDetails) }, [userDetails, isEditing]);
+
+            const handleInputChange = (e) => { 
+                const { name, value } = e.target; 
+                const newTempData = {...tempUserData, [name]: value};
+                if(name === 'birthday') {
+                    const age = calculateAge(value);
+                    newTempData.age = age >= 0 ? age : null;
+                }
+                setTempUserData(newTempData); 
+            };
+             const handlePhotoChange = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    const previewUrl = URL.createObjectURL(file);
+                    setTempUserData(prev => ({ ...prev, photo: previewUrl }));
+                }
+            };
+
+            const calculateAge = (dob) => {
+                const birthDate = new Date(dob);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const m = today.getMonth() - birthDate.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                return age;
+            }
+
+            const handleSave = () => {
+                setUserDetails(tempUserData);
+                setIsEditing(false);
+            };
+
+            const InfoRow = ({label, value}) => (<div className="flex flex-col sm:flex-row justify-between py-3 border-b" style={{borderColor: 'var(--border-color)'}}><p className="text-sm" style={{color: 'var(--text-secondary)'}}>{label}</p><p className="font-semibold text-left sm:text-right" style={{color: 'var(--text-primary)'}}>{value}</p></div>);
+            const EditInfoRow = ({label, name, value, type="text", onChange}) => ( <div className="space-y-1"><label className="text-sm font-medium" style={{color: 'var(--text-secondary)'}}>{label}</label><input type={type} name={name} value={value} onChange={onChange} className="w-full px-3 py-1.5 border-transparent rounded-md focus:outline-none focus:ring-2" style={{backgroundColor: 'var(--bg-tertiary)', '--tw-ring-color': 'var(--accent-primary)'}}/></div>);
+
+            return (
+            <div className="space-y-6">
+                 <div className="p-6 rounded-xl shadow-sm flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                    <div className="relative group">
+                        <img 
+                            src={tempUserData.photo || 'https://placehold.co/100x100/E5E7EB/4B5563?text=Photo'} 
+                            alt="Profile" 
+                            className="w-24 h-24 rounded-full object-cover border-4" 
+                            style={{borderColor: 'var(--bg-tertiary)'}}
+                        />
+                        <input type="file" ref={fileInputRef} onChange={handlePhotoChange} accept="image/*" className="hidden"/>
+                        <button 
+                            onClick={() => fileInputRef.current.click()}
+                            className="absolute inset-0 w-full h-full bg-black bg-opacity-0 group-hover:bg-opacity-50 flex items-center justify-center rounded-full transition-opacity duration-300"
+                        >
+                            <CameraIcon className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        </button>
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-center sm:text-left" style={{color: 'var(--text-primary)'}}>{userDetails.name}</h1>
+                        <p className="text-center sm:text-left" style={{color: 'var(--text-secondary)'}}>{userDetails.email}</p>
+                    </div>
+                </div>
+
+                <div className="rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                    <div className="flex border-b" style={{borderColor: 'var(--border-color)'}}>{['Personal Info', 'Privacy'].map(tab => (<button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2 font-medium text-sm transition-colors ${activeTab === tab ? 'border-b-2' : ''}`} style={{borderColor: activeTab === tab ? 'var(--accent-primary)' : 'transparent', color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-secondary)'}}>{tab}</button>))}</div>
+                    <div className="p-6 transition-opacity duration-300">
+                        {activeTab === 'Personal Info' && ( <div className="animate-fade-in"> <div className="flex justify-between items-center mb-4"> <h3 className="font-bold text-lg">Personal Information</h3> {!isEditing && <button onClick={() => setIsEditing(true)} className="text-sm font-medium hover:underline" style={{color: 'var(--accent-primary)'}}>Edit</button>} </div> {!isEditing ? ( <div className="space-y-2"> <InfoRow label="Full Name" value={userDetails.name}/> <InfoRow label="Email" value={userDetails.email}/> <InfoRow label="Birthday" value={userDetails.birthday}/> <InfoRow label="Age" value={`${userDetails.age} years`}/> <InfoRow label="Location" value={userDetails.location}/> </div> ) : ( <div className="space-y-4"> <EditInfoRow label="Full Name" name="name" value={tempUserData.name} onChange={handleInputChange} /> <EditInfoRow label="Email" name="email" value={tempUserData.email} onChange={handleInputChange} /> <EditInfoRow label="Birthday" name="birthday" type="date" value={tempUserData.birthday} onChange={handleInputChange} /> {tempUserData.age !== null && <p className="text-sm">Age: {tempUserData.age} years</p>} <EditInfoRow label="Location" name="location" value={tempUserData.location} onChange={handleInputChange} /> <div className="flex justify-end space-x-3 pt-4"> <button onClick={() => setIsEditing(false)} className="text-sm font-medium px-4 py-2 rounded-lg" style={{backgroundColor: 'var(--bg-tertiary)'}}>Cancel</button> <button onClick={handleSave} className="text-sm font-medium text-white px-4 py-2 rounded-lg" style={{backgroundColor: 'var(--accent-primary)'}}>Save Changes</button> </div> </div> )} </div> )}
+                        {activeTab === 'Privacy' && (
+                            <div className="animate-fade-in">
+                                <h3 className="font-bold text-lg mb-4" style={{color: 'var(--text-primary)'}}>Privacy & Security</h3>
+                                <div className="space-y-4 divide-y" style={{borderColor: 'var(--border-color)'}}>
+                                    <div className="flex justify-between items-center pt-2">
+                                        <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>Data Sharing</p><p className="text-sm capitalize" style={{color: 'var(--text-secondary)'}}>{privacySettings.dataSharing} sharing enabled</p></div>
+                                        <button className="text-sm font-medium hover:underline" style={{color: 'var(--accent-primary)'}}>Manage</button>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-4">
+                                         <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>Location Privacy</p><p className="text-sm" style={{color: 'var(--text-secondary)'}}>Location services {privacySettings.location ? 'active' : 'inactive'}</p></div>
+                                        <ToggleSwitch enabled={privacySettings.location} onChange={val => setPrivacySettings(s => ({...s, location: val}))} />
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+            );
+        };
+        const SettingsPageContent = ({ settings, setSettings, onLogout, notificationSettings, setNotificationSettings }) => {
+            const { t, setLang, lang } = useLang();
+            const [isLangModalOpen, setIsLangModalOpen] = useState(false);
+            const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+            const [tempLang, setTempLang] = useState(lang);
+            const [tempTheme, setTempTheme] = useState(settings.theme);
+
+            const handleSaveLanguage = () => { setLang(tempLang); setIsLangModalOpen(false); };
+            const handleSaveTheme = () => { setSettings(s => ({...s, theme: tempTheme})); setIsThemeModalOpen(false); };
+            
+            const handleToggle = (key) => {
+                setNotificationSettings(prev => ({...prev, [key]: !prev[key]}));
+            };
+
+            return (
+                 <div className="space-y-6">
+                    <h1 className="text-3xl font-bold" style={{color: 'var(--text-primary)'}}>{t('settings')}</h1>
+                    <div className="p-6 rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                        <h2 className="text-lg font-bold mb-2" style={{color: 'var(--text-primary)'}}>{t('notificationPreferences')}</h2>
+                        <div className="space-y-4 divide-y" style={{borderColor: 'var(--border-color)'}}>
+                            <div className="flex justify-between items-center pt-2">
+                                <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>{t('pickupReminders')}</p><p className="text-sm" style={{color: 'var(--text-secondary)'}}>{t('pickupRemindersDesc')}</p></div>
+                                <ToggleSwitch enabled={notificationSettings.pickupReminders} onChange={() => handleToggle('pickupReminders')} />
+                            </div>
+                             <div className="flex justify-between items-center pt-4">
+                                <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>{t('trainingUpdates')}</p><p className="text-sm" style={{color: 'var(--text-secondary)'}}>{t('trainingUpdatesDesc')}</p></div>
+                                <ToggleSwitch enabled={notificationSettings.trainingUpdates} onChange={() => handleToggle('trainingUpdates')} />
+                            </div>
+                             <div className="flex justify-between items-center pt-4">
+                                <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>{t('reportStatus')}</p><p className="text-sm" style={{color: 'var(--text-secondary)'}}>{t('reportStatusDesc')}</p></div>
+                                <ToggleSwitch enabled={notificationSettings.reportStatus} onChange={() => handleToggle('reportStatus')} />
+                            </div>
+                             <div className="flex justify-between items-center pt-4">
+                                <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>{t('communityNews')}</p><p className="text-sm" style={{color: 'var(--text-secondary)'}}>{t('communityNewsDesc')}</p></div>
+                                <ToggleSwitch enabled={notificationSettings.communityNews} onChange={() => handleToggle('communityNews')} />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-6 rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                        <h2 className="text-lg font-bold mb-4" style={{color: 'var(--text-primary)'}}>App Preferences</h2>
+                        <div className="space-y-4 divide-y" style={{borderColor: 'var(--border-color)'}}>
+                            <div className="flex justify-between items-center pt-2">
+                                <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>{t('language')}</p><p className="text-sm" style={{color: 'var(--text-secondary)'}}>{languages.find(l => l.id === lang).name}</p></div>
+                                <button onClick={() => { setTempLang(lang); setIsLangModalOpen(true); }} className="text-sm font-medium hover:underline" style={{color: 'var(--accent-primary)'}}>{t('change')}</button>
+                            </div>
+                            <div className="flex justify-between items-center pt-4">
+                                 <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>{t('theme')}</p><p className="text-sm capitalize" style={{color: 'var(--text-secondary)'}}>{settings.theme}</p></div>
+                                <button onClick={() => { setTempTheme(settings.theme); setIsThemeModalOpen(true); }} className="text-sm font-medium hover:underline" style={{color: 'var(--accent-primary)'}}>{t('change')}</button>
+                            </div>
+                        </div>
+                    </div>
+                     <div className="p-6 rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                        <h2 className="text-lg font-bold mb-4" style={{color: 'var(--text-primary)'}}>Account Management</h2>
+                        <div className="space-y-4 divide-y" style={{borderColor: 'var(--border-color)'}}>
+                            <div className="flex justify-between items-center pt-2">
+                                <div><p className="font-medium text-red-600">{t('deleteAccount')}</p><p className="text-sm" style={{color: 'var(--text-secondary)'}}>{t('deleteAccountDesc')}</p></div>
+                                <button className="text-sm font-medium text-white bg-red-600 px-4 py-1.5 rounded-full hover:bg-red-700">{t('delete')}</button>
+                            </div>
+                            <div className="flex justify-between items-center pt-4">
+                                 <div><p className="font-medium" style={{color: 'var(--text-primary)'}}>{t('logout')}</p><p className="text-sm" style={{color: 'var(--text-secondary)'}}>Sign out on this device.</p></div>
+                                <button onClick={onLogout} className="text-sm font-medium" style={{color: 'var(--text-secondary)'}}>{t('logout')}</button>
+                            </div>
+                        </div>
+                    </div>
+                    <Modal isOpen={isLangModalOpen} onClose={() => setIsLangModalOpen(false)} title={t('language')}>
+                        <div className="space-y-2"> {languages.map(l => ( <button key={l.id} onClick={() => setTempLang(l.id)} className={`w-full text-left px-3 py-2 rounded-md ${tempLang === l.id ? 'font-bold' : ''}`} style={{backgroundColor: tempLang === l.id ? 'var(--bg-tertiary)' : 'transparent'}}> {l.name} </button> ))} </div>
+                        <button onClick={handleSaveLanguage} className="w-full mt-4 py-2 font-semibold text-white rounded-lg" style={{backgroundColor: 'var(--accent-primary)'}}>{t('saveChanges')}</button>
+                    </Modal>
+                    <Modal isOpen={isThemeModalOpen} onClose={() => setIsThemeModalOpen(false)} title="Select Theme">
+                        <div className="space-y-2"> {themes.map(th => ( <button key={th.id} onClick={() => setTempTheme(th.id)} className={`w-full text-left px-3 py-2 rounded-md ${tempTheme === th.id ? 'font-bold' : ''}`} style={{backgroundColor: tempTheme === th.id ? 'var(--bg-tertiary)' : 'transparent'}}> {th.name} </button> ))} </div>
+                        <button onClick={handleSaveTheme} className="w-full mt-4 py-2 font-semibold text-white rounded-lg" style={{backgroundColor: 'var(--accent-primary)'}}>{t('saveChanges')}</button>
+                    </Modal>
+                 </div>
+            );
+        };
+        const SupportPageContent = () => {
+             const faqs = [ { q: 'How do I report an issue?', a: 'Go to the "Report Issues" page, fill in the details about the location and problem, add a photo, and submit it for AI verification.' }, { q: 'How can I track the garbage truck?', a: 'The "Track Vehicles" page shows the live location of nearby collection trucks on a map. You can click on a truck to see its details and ETA.' }, { q: 'Is my data safe?', a: 'Yes, we take your privacy seriously. You can manage your data sharing and visibility settings in the "Profile" > "Privacy" section.' }, { q: 'How do I find a recycling center?', a: 'Use the "Find Centers" page. You can search by city or state and filter by the type of waste you want to recycle.' } ];
+            const [openFAQ, setOpenFAQ] = useState(null);
+
+            return (
+                <div className="space-y-6">
+                    <h1 className="text-3xl font-bold" style={{color: 'var(--text-primary)'}}>Help & Support</h1>
+                    <div className="p-6 rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                        <h2 className="text-xl font-bold mb-4">Frequently Asked Questions (FAQs)</h2>
+                        <div className="space-y-4">
+                            {faqs.map((faq, index) => (
+                                <div key={index} className="border-b" style={{borderColor: 'var(--border-color)'}}>
+                                    <button onClick={() => setOpenFAQ(openFAQ === index ? null : index)} className="w-full flex justify-between items-center text-left py-4">
+                                        <span className="font-semibold" style={{color: 'var(--text-primary)'}}>{faq.q}</span>
+                                        <span className={`transform transition-transform ${openFAQ === index ? 'rotate-180' : ''}`}>▼</span>
+                                    </button>
+                                    {openFAQ === index && <p className="pb-4 text-sm" style={{color: 'var(--text-secondary)'}}>{faq.a}</p>}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="p-6 rounded-xl shadow-sm" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                        <h2 className="text-xl font-bold mb-4">Contact Us</h2>
+                        <p style={{color: 'var(--text-secondary)'}}>If you need further assistance, you can reach out to our support team.</p>
+                        <p className="mt-2 font-semibold">Email: <a href="mailto:support@ecofresh.gov.in" className="hover:underline" style={{color: 'var(--accent-primary)'}}>support@ecofresh.gov.in</a></p>
+                        <p className="mt-1 font-semibold">Helpline: <span style={{color: 'var(--accent-primary)'}}>1800-123-4567</span> (Toll-Free)</p>
+                    </div>
+                </div>
+            );
+        };
+        const DashboardLayout = ({ onLogout, userDetails, setUserDetails, notificationSettings, setNotificationSettings }) => {
+            const { t } = useLang();
+            const [activePage, setActivePage] = useState(t('dashboard'));
+            const [isSidebarOpen, setSidebarOpen] = useState(false);
+            const [settings, setSettings] = useState({ theme: 'light' });
+            const [showNotifications, setShowNotifications] = useState(false);
+            const [notifications, setNotifications] = useState([
+                {id: 1, title: "Pickup Reminder", message: "Your weekly pickup is scheduled for tomorrow at 8 AM.", time: "2 hours ago", read: false},
+                {id: 2, title: "Report #531 Solved", message: "The overflowing bin near City Park has been cleared.", time: "1 day ago", read: false},
+                {id: 3, title: "New Training Module", message: "Learn about e-waste segregation. Complete it to earn 50 points!", time: "3 days ago", read: true},
+            ]);
+            const notificationRef = useRef(null);
+
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+                        setShowNotifications(false);
+                    }
+                };
+                document.addEventListener("mousedown", handleClickOutside);
+                return () => document.removeEventListener("mousedown", handleClickOutside);
+            }, [notificationRef]);
+            
+            useEffect(() => { document.documentElement.className = `theme-${settings.theme}`; }, [settings.theme]);
+            
+            const unreadCount = notifications.filter(n => !n.read).length;
+
+            const renderContent = () => {
+                const pageKey = Object.keys(translations.en).find(key => t(key) === activePage) || 'dashboard';
+                switch (pageKey) {
+                    case 'dashboard': return <DashboardContent setActivePage={(page) => setActivePage(t(page))} />;
+                    case 'training': return <TrainingPageContent />;
+                    case 'reportIssues': return <ReportIssuesPageContent />;
+                    case 'trackVehicles': return <TrackVehiclesPageContent />;
+                    case 'findCenters': return <FindCentersPageContent />;
+                    case 'profile': return <ProfilePageContent userDetails={userDetails} setUserDetails={setUserDetails} />;
+                    case 'settings': return <SettingsPageContent settings={settings} setSettings={setSettings} onLogout={onLogout} notificationSettings={notificationSettings} setNotificationSettings={setNotificationSettings}/>;
+                    case 'support': return <SupportPageContent />;
+                    default: return <DashboardContent setActivePage={(page) => setActivePage(t(page))} />;
+                }
+            };
+            const NavLink = ({ icon, labelKey }) => (<button onClick={() => { setActivePage(t(labelKey)); setSidebarOpen(false); }} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-300 ${activePage === t(labelKey) ? 'font-bold' : ''}`} style={{ backgroundColor: activePage === t(labelKey) ? 'var(--accent-primary)' : 'transparent', color: activePage === t(labelKey) ? 'white' : 'var(--text-secondary)' }}>{icon}<span className="font-medium">{t(labelKey)}</span></button>);
+            return (
+                <div className="flex h-screen font-sans" style={{backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)'}}>
+                    <div className={`fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden ${isSidebarOpen ? 'block' : 'hidden'}`} onClick={() => setSidebarOpen(false)}></div>
+                    <aside className={`absolute inset-y-0 left-0 shadow-lg w-64 p-4 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out md:relative md:translate-x-0 z-30`} style={{backgroundColor: 'var(--bg-secondary)'}}>
+                        <div className="flex items-center space-x-2 mb-8 px-2"><EcoFreshLogo /><div><h1 className="font-bold text-lg" style={{color: 'var(--text-primary)'}}>Eco Fresh</h1><p className="text-xs" style={{color: 'var(--text-secondary)'}}>{t('citizen')} Portal</p></div></div>
+                        <nav className="space-y-2 flex-grow"><NavLink icon={<DashboardIcon />} labelKey="dashboard" /><NavLink icon={<ReportIcon />} labelKey="reportIssues" /><NavLink icon={<VehicleIcon className="w-6 h-6"/>} labelKey="trackVehicles" /><NavLink icon={<LocationMarkerIcon className="w-6 h-6"/>} labelKey="findCenters" /><NavLink icon={<TrainingIcon />} labelKey="training" /><NavLink icon={<ProfileIcon className="w-6 h-6" />} labelKey="profile" /><NavLink icon={<SettingsIcon />} labelKey="settings" /><NavLink icon={<SupportIcon />} labelKey="support" /></nav>
+                        <div className="absolute bottom-4 left-4 right-4"><button onClick={onLogout} className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100" style={{color: 'var(--text-secondary)', '--tw-hover-bg-opacity': 0.1,}}> <LogoutIcon /><span className="font-medium">{t('logout')}</span> </button></div>
+                    </aside>
+                    <div className="flex-1 flex flex-col">
+                        <header className="shadow-sm p-4 flex justify-between items-center z-10" style={{backgroundColor: 'var(--bg-secondary)'}}>
+                             <button onClick={() => setSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md md:hidden">{isSidebarOpen ? <CloseIcon /> : <MenuIcon />}</button>
+                             <div className="flex-grow"></div>
+                             <div className="flex items-center space-x-4">
+                                <div ref={notificationRef} className="relative">
+                                    <button onClick={() => setShowNotifications(!showNotifications)} className="p-2 rounded-full" style={{color: 'var(--text-secondary)'}}>
+                                        <BellIcon />
+                                        {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2" style={{borderColor: 'var(--bg-secondary)'}}></span>}
+                                    </button>
+                                    {showNotifications && (
+                                        <div className="absolute right-0 mt-2 w-80 max-w-sm rounded-xl shadow-xl border" style={{backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)'}}>
+                                            <div className="p-3 border-b flex justify-between items-center" style={{borderColor: 'var(--border-color)'}}>
+                                                <h3 className="font-semibold text-md">Notifications</h3>
+                                                <button onClick={() => setNotifications(notifications.map(n => ({...n, read: true})))} className="text-xs font-medium" style={{color: 'var(--accent-primary)'}}>
+                                                    Mark all as read
+                                                </button>
+                                            </div>
+                                            <div className="divide-y max-h-96 overflow-y-auto" style={{borderColor: 'var(--border-color)'}}>
+                                                {notifications.map(n => (
+                                                    <div key={n.id} className="p-3 flex items-start gap-3 transition-colors hover:bg-gray-50" style={{'--tw-hover-bg-opacity': 0.1}}>
+                                                        {!n.read && <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5" style={{backgroundColor: 'var(--accent-primary)'}}></div>}
+                                                        <div className={n.read ? 'pl-5' : ''}>
+                                                            <p className="font-semibold text-sm">{n.title}</p>
+                                                            <p className="text-xs mt-1" style={{color: 'var(--text-secondary)'}}>{n.message}</p>
+                                                            <p className="text-xs mt-1" style={{color: 'var(--text-secondary)'}}>{n.time}</p>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                 {notifications.length === 0 && <p className="text-center text-sm py-8" style={{color: 'var(--text-secondary)'}}>No new notifications</p>}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                    <div className="text-right">
+                                        <p className="font-semibold text-sm" style={{color: 'var(--text-primary)'}}>{userDetails.name || t('citizen')}</p>
+                                        <p className="text-xs" style={{color: 'var(--text-secondary)'}}>{t('citizen')}</p>
+                                    </div>
+                                    <img src={userDetails.photo || 'https://placehold.co/40x40/E5E7EB/4B5563?text=:-) '} alt="Profile" className="w-10 h-10 rounded-full object-cover"/>
+                                </div>
+                             </div>
+                        </header>
+                        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+                            {renderContent()}
+                        </main>
+                    </div>
+                </div>
+            );
+        };
+        
+        const AdminDeskbarLayout = ({ onLogout, userDetails }) => {
+            const adminTranslations = {
+                en: {
+                    dashboard: 'Dashboard', 'points-earned': 'Points Earned', 'pickups-done': 'Pickups Done', 'quick-actions': 'Quick Actions', 'schedule-new-pickup': 'Schedule New Pickup', 'waste-guide-title': 'Waste Segregation Guide', 'waste-guide-desc': 'Properly segregate your waste to earn more points and help the environment.', 'learn-more': 'Learn More &rarr;', 'schedule-page-title': 'Request a Pickup', 'waste-type-label': 'Waste Type', 'address-label': 'Address', 'address-placeholder': 'Enter your full address here', 'date-label': 'Preferred Date', 'confirm-pickup-btn': 'Confirm Pickup', 'guide-page-title': 'Waste Guide', 'dry-waste-title': 'Dry Waste (Sookha Kachra)', 'dry-waste-desc': 'Paper, plastic, glass, metal, cardboard. These can be recycled.', 'wet-waste-title': 'Wet Waste (Geela Kachra)', 'wet-waste-desc': 'Kitchen waste like vegetable peels, leftover food. This can be composted.', 'ewaste-title': 'E-Waste (Electronic Kachra)', 'ewaste-desc': 'Old phones, chargers, batteries, laptops. These must be collected separately.', 'hazardous-waste-title': 'Hazardous Waste (Khatarnak Kachra)', 'hazardous-waste-desc': 'Expired medicines, paints, bulbs, chemicals. Do not mix with general waste.', 'status-page-title': 'My Pickups', 'dry-waste-pickup': 'Dry Waste Pickup', 'scheduled-for': 'Scheduled for Tomorrow, 10 AM', 'pending-status': 'Pending', 'wet-waste-pickup': 'Wet Waste Pickup', 'completed-on': 'Completed on 25 Sep', 'completed-status': 'Completed', 'ewaste-pickup': 'E-Waste Pickup', 'cancelled-on': 'Cancelled on 22 Sep', 'cancelled-status': 'Cancelled', 'home-nav': 'Home', 'schedule-nav': 'Schedule', 'guide-nav': 'Guide', 'status-nav': 'Status', 'modal-title': 'Request Submitted!', 'modal-desc': 'Your pickup request has been submitted successfully.', 'modal-btn': 'OK',
+                },
+                hi: {
+                    dashboard: 'डैशबोर्ड', 'points-earned': 'अर्जित अंक', 'pickups-done': 'पिकअप पूरे हुए', 'quick-actions': 'त्वरित कार्रवाई', 'schedule-new-pickup': 'नया पिकअप शेड्यूल करें', 'waste-guide-title': 'अपशिष्ट पृथक्करण गाइड', 'waste-guide-desc': 'अधिक अंक अर्जित करने और पर्यावरण की मदद करने के लिए अपने कचरे को ठीक से अलग करें।', 'learn-more': 'और जानें &rarr;', 'schedule-page-title': 'पिकअप का अनुरोध करें', 'waste-type-label': 'कचरे का प्रकार', 'address-label': 'पता', 'address-placeholder': 'आपका पूरा पता यहाँ लिखें', 'date-label': 'पसंदीदा तारीख', 'confirm-pickup-btn': 'पिकअप की पुष्टि करें', 'guide-page-title': 'अपशिष्ट गाइड', 'dry-waste-title': 'सूखा कचरा (Dry Waste)', 'dry-waste-desc': 'कागज, प्लास्टिक, कांच, धातु, कार्डबोर्ड। इन्हें रीसायकल किया जा सकता है।', 'wet-waste-title': 'गीला कचरा (Wet Waste)', 'wet-waste-desc': 'रसोई का कचरा जैसे सब्जियों के छिलके, बचा हुआ खाना। इससे खाद बनती है।', 'ewaste-title': 'ई-कचरा (E-Waste)', 'ewaste-desc': 'पुराने फोन, चार्जर, बैटरी, लैपटॉप। इन्हें अलग से इकट्ठा करना जरूरी है।', 'hazardous-waste-title': 'खतरनाक कचरा (Hazardous Waste)', 'hazardous-waste-desc': 'एक्सपायर्ड दवाएं, पेंट, बल्ब, रसायन। इन्हें आम कचरे के साथ न मिलाएं।', 'status-page-title': 'मेरे पिकअप', 'dry-waste-pickup': 'सूखा कचरा पिकअप', 'scheduled-for': 'कल सुबह 10 बजे के लिए निर्धारित', 'pending-status': 'लंबित', 'wet-waste-pickup': 'गीला कचरा पिकअप', 'completed-on': '25 सितंबर को पूरा हुआ', 'completed-status': 'पूरा हुआ', 'ewaste-pickup': 'ई-कचरा पिकअप', 'cancelled-on': '22 सितंबर को रद्द किया गया', 'cancelled-status': 'रद्द', 'home-nav': 'होम', 'schedule-nav': 'शेड्यूल', 'guide-nav': 'गाइड', 'status-nav': 'स्टेटस', 'modal-title': 'अनुरोध सबमिट हो गया!', 'modal-desc': 'आपका पिकअप अनुरोध सफलतापूर्वक दर्ज हो गया है।', 'modal-btn': 'ठीक है',
+                }
+            };
+            const [activePage, setActivePage] = useState('home');
+            const [lang, setLang] = useState('en');
+            const [pickups, setPickups] = useState([
+                { id: 1, type: 'ewaste-pickup', date: 'Cancelled on 22 Sep', status: 'cancelled-status'},
+                { id: 2, type: 'wet-waste-pickup', date: 'Completed on 25 Sep', status: 'completed-status'},
+                { id: 3, type: 'dry-waste-pickup', date: 'Scheduled for Tomorrow, 10 AM', status: 'pending-status'}
+            ]);
+            const [isSuccessModalOpen, setSuccessModalOpen] = useState(false);
+            const [isErrorModalOpen, setErrorModalOpen] = useState(false);
+            const [errorMessage, setErrorMessage] = useState('');
+            
+            const pageTitles = { home: 'dashboard', schedule: 'schedule-page-title', guide: 'guide-page-title', status: 'status-page-title' };
+            const [headerTitleKey, setHeaderTitleKey] = useState(pageTitles.home);
+
+            const t = (key) => adminTranslations[lang][key] || key;
+            
+            useEffect(() => {
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            }, [activePage, isSuccessModalOpen, isErrorModalOpen, pickups]);
+            
+            const handleNavClick = (pageId) => {
+                setActivePage(pageId);
+                setHeaderTitleKey(pageTitles[pageId]);
+            };
+
+            const handleFormSubmit = (e) => {
+                e.preventDefault();
+                const wasteType = e.target['waste-type'].value;
+                const address = e.target['address'].value;
+                const date = e.target['date'].value;
+
+                if (!address.trim() || !date) {
+                    setErrorMessage('Please fill out the address and date.');
+                    setErrorModalOpen(true);
+                    return;
+                }
+                
+                const newPickup = {
+                    id: Date.now(),
+                    type: `${wasteType} Pickup`,
+                    date: `Requested for ${new Date(date).toLocaleDateString()}`,
+                    status: 'pending-status'
+                };
+                setPickups(prev => [newPickup, ...prev]);
+
+                setSuccessModalOpen(true);
+                e.target.reset();
+            };
+            
+            const getStatusClass = (status) => {
+                switch(status) {
+                    case 'pending-status': return 'text-yellow-800 bg-yellow-100 border-yellow-200';
+                    case 'completed-status': return 'text-green-800 bg-green-100 border-green-200';
+                    case 'cancelled-status': return 'text-slate-800 bg-slate-200 border-slate-300';
+                    default: return '';
+                }
+            };
+            
+            const AdminPage = ({id, children, activePage}) => <div id={id} className={`admin-page ${activePage === id ? 'active' : ''}`}>{children}</div>;
+            
+            const NavButton = ({page, icon, labelKey}) => (
+                <button data-page={page} onClick={() => handleNavClick(page)} className={`admin-nav-btn pt-3 pb-3 flex-1 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors ${activePage === page ? 'active-nav' : ''}`}>
+                    <i data-lucide={icon} className="w-6 h-6 mb-1"></i>
+                    <span className="text-xs font-medium">{t(labelKey)}</span>
+                </button>
+            );
+
+            return (
+                 <div className="max-w-md mx-auto min-h-screen bg-emerald-50 text-slate-800 shadow-lg flex flex-col">
+                    <header className="bg-gradient-to-r from-emerald-600 to-teal-800 text-white p-4 shadow-md">
+                        <div className="flex justify-between items-center">
+                            <h1 className="text-xl font-bold tracking-wide">{t(headerTitleKey)}</h1>
+                             <div className="flex items-center space-x-2">
+                                <div className="flex space-x-1 bg-teal-900/50 p-1 rounded-lg">
+                                    <button onClick={() => setLang('en')} className={`admin-lang-btn text-xs px-2 py-1 rounded-md ${lang === 'en' ? 'active' : ''}`}>EN</button>
+                                    <button onClick={() => setLang('hi')} className={`admin-lang-btn text-xs px-2 py-1 rounded-md ${lang === 'hi' ? 'active' : ''}`}>HI</button>
+                                </div>
+                                <button onClick={onLogout} className="text-white hover:bg-teal-900/50 p-1.5 rounded-full"><LogoutIcon /></button>
+                             </div>
+                        </div>
+                    </header>
+
+                    <main className="flex-grow p-4 md:p-6 overflow-y-auto pb-24">
+                        <AdminPage id="home" activePage={activePage}>
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div className="admin-card bg-gradient-to-br from-green-200 to-lime-200 text-green-800 p-4">
+                                    <h3 className="font-bold text-lg">{t('points-earned')}</h3>
+                                    <p className="text-3xl font-bold">1,250</p>
+                                </div>
+                                <div className="admin-card bg-gradient-to-br from-cyan-200 to-sky-200 text-sky-800 p-4">
+                                    <h3 className="font-bold text-lg">{t('pickups-done')}</h3>
+                                    <p className="text-3xl font-bold">15</p>
+                                </div>
+                            </div>
+                            <div className="admin-card p-4 mb-6">
+                                <h2 className="text-lg font-semibold mb-3 text-teal-900">{t('quick-actions')}</h2>
+                                <button onClick={() => handleNavClick('schedule')} className="w-full admin-btn-gradient text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                                    <i data-lucide="calendar-plus" className="w-5 h-5 mr-2"></i>
+                                    <span>{t('schedule-new-pickup')}</span>
+                                </button>
+                            </div>
+                            <div className="admin-card p-4">
+                                <h2 className="text-lg font-semibold mb-3 text-teal-900">{t('waste-guide-title')}</h2>
+                                <p className="text-slate-600 mb-4">{t('waste-guide-desc')}</p>
+                                <a href="#" onClick={(e) => { e.preventDefault(); handleNavClick('guide'); }} className="text-teal-600 font-semibold hover:underline">{t('learn-more')}</a>
+                            </div>
+                        </AdminPage>
+
+                        <AdminPage id="schedule" activePage={activePage}>
+                            <h2 className="text-2xl font-bold mb-4 text-teal-800">{t('schedule-page-title')}</h2>
+                            <form onSubmit={handleFormSubmit} className="space-y-4">
+                                <div>
+                                    <label htmlFor="waste-type" className="block text-sm font-medium text-slate-700">{t('waste-type-label')}</label>
+                                    <select id="waste-type" name="waste-type" className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-slate-300 focus:outline-none focus:ring-teal-500 focus:border-teal-500 sm:text-sm rounded-md">
+                                        <option>Dry Waste</option>
+                                        <option>Wet Waste</option>
+                                        <option>E-Waste</option>
+                                        <option>Hazardous Waste</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label htmlFor="address" className="block text-sm font-medium text-slate-700">{t('address-label')}</label>
+                                    <textarea id="address" name="address" rows="3" className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-teal-500 focus:border-teal-500" placeholder={t('address-placeholder')}></textarea>
+                                </div>
+                                <div>
+                                    <label htmlFor="date" className="block text-sm font-medium text-slate-700">{t('date-label')}</label>
+                                    <input type="date" id="date" name="date" className="mt-1 block w-full shadow-sm sm:text-sm border-slate-300 rounded-md focus:ring-teal-500 focus:border-teal-500" />
+                                </div>
+                                <button type="submit" className="w-full admin-btn-gradient text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                                    <span>{t('confirm-pickup-btn')}</span>
+                                </button>
+                            </form>
+                        </AdminPage>
+
+                        <AdminPage id="guide" activePage={activePage}>
+                            <h2 className="text-2xl font-bold mb-4 text-teal-800">{t('guide-page-title')}</h2>
+                            <div className="space-y-4">
+                                <div className="admin-card p-4 border-l-4 border-blue-500 bg-gradient-to-r from-blue-50 to-indigo-50">
+                                    <h3 className="font-bold text-blue-900">{t('dry-waste-title')}</h3>
+                                    <p className="text-blue-800 text-sm">{t('dry-waste-desc')}</p>
+                                </div>
+                                <div className="admin-card p-4 border-l-4 border-green-500 bg-gradient-to-r from-green-50 to-emerald-50">
+                                    <h3 className="font-bold text-green-900">{t('wet-waste-title')}</h3>
+                                    <p className="text-green-800 text-sm">{t('wet-waste-desc')}</p>
+                                </div>
+                                <div className="admin-card p-4 border-l-4 border-violet-500 bg-gradient-to-r from-violet-50 to-purple-50">
+                                    <h3 className="font-bold text-violet-900">{t('ewaste-title')}</h3>
+                                    <p className="text-violet-800 text-sm">{t('ewaste-desc')}</p>
+                                </div>
+                                <div className="admin-card p-4 border-l-4 border-red-500 bg-gradient-to-r from-red-50 to-rose-50">
+                                    <h3 className="font-bold text-red-900">{t('hazardous-waste-title')}</h3>
+                                    <p className="text-red-800 text-sm">{t('hazardous-waste-desc')}</p>
+                                </div>
+                            </div>
+                        </AdminPage>
+
+                        <AdminPage id="status" activePage={activePage}>
+                            <h2 className="text-2xl font-bold mb-4 text-teal-800">{t('status-page-title')}</h2>
+                            <div className="space-y-3">
+                                {pickups.map(p => (
+                                    <div key={p.id} className="admin-card p-4 flex items-center justify-between">
+                                        <div>
+                                            <p className="font-semibold text-slate-700">{p.type.includes("Pickup") ? p.type : t(p.type)}</p>
+                                            <p className="text-sm text-slate-500">{p.date.includes("for") ? p.date : t(p.date)}</p>
+                                        </div>
+                                        <span className={`text-sm font-medium px-2 py-1 rounded-full border ${getStatusClass(p.status)}`}>{t(p.status)}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </AdminPage>
+                    </main>
+
+                    <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t-2 border-slate-200 flex justify-around">
+                        <NavButton page="home" icon="home" labelKey="home-nav" />
+                        <NavButton page="schedule" icon="calendar-plus" labelKey="schedule-nav" />
+                        <NavButton page="guide" icon="book-open" labelKey="guide-nav" />
+                        <NavButton page="status" icon="truck" labelKey="status-nav" />
+                    </nav>
+
+                    {isSuccessModalOpen && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white p-8 rounded-xl text-center shadow-xl border border-gray-200">
+                                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                                    <i data-lucide="check" className="h-6 w-6 text-green-600"></i>
+                                </div>
+                                <h3 className="text-lg leading-6 font-medium text-slate-900">{t('modal-title')}</h3>
+                                <p className="text-sm text-slate-500 mt-2">{t('modal-desc')}</p>
+                                <button onClick={() => { setSuccessModalOpen(false); handleNavClick('status'); }} className="mt-4 admin-btn-gradient text-white font-bold py-2 px-4 rounded-lg">{t('modal-btn')}</button>
+                            </div>
+                        </div>
+                    )}
+                    {isErrorModalOpen && (
+                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                            <div className="bg-white p-8 rounded-xl text-center shadow-xl border border-gray-200">
+                                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                                    <i data-lucide="x-circle" className="h-6 w-6 text-red-600"></i>
+                                </div>
+                                <h3 className="text-lg leading-6 font-medium text-slate-900">Error</h3>
+                                <p className="text-sm text-slate-500 mt-2">{errorMessage}</p>
+                                <button onClick={() => setErrorModalOpen(false)} className="mt-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">OK</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+        
+        // --- Main App Component ---
+        function App() {
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [userRole, setUserRole] = useState(null);
+            const [userDetails, setUserDetails] = useState(null);
+            const [notificationSettings, setNotificationSettings] = useState({
+                pickupReminders: true,
+                trainingUpdates: true,
+                reportStatus: true,
+                communityNews: false,
+            });
+            const handleLoginSuccess = (role, details) => { setIsLoggedIn(true); setUserRole(role); setUserDetails(details); };
+            const handleLogout = () => { setIsLoggedIn(false); setUserRole(null); setUserDetails(null); };
+            return (
+                <div className="app-container h-screen">
+                    {isLoggedIn
+                        ? (userRole === 'collector' 
+                            ? <AdminDeskbarLayout onLogout={handleLogout} userDetails={userDetails} /> 
+                            : <DashboardLayout onLogout={handleLogout} userDetails={userDetails} setUserDetails={setUserDetails} notificationSettings={notificationSettings} setNotificationSettings={setNotificationSettings}/>)
+                        : <LoginPage onLoginSuccess={handleLoginSuccess} />
+                    }
+                </div>
+            );
+        }
+        
+        // App ko page par render karne ke liye
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<LangProvider><App /></LangProvider>);
+    </script>
+    
+</body>
+</html>
+
